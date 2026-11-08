@@ -2065,8 +2065,8 @@ const FA_ICON={shop:'🛍️',hospital:'🏥',school:'🏫',road:'🚗',transit:
 const FA_MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const FA_UNIT=/^(nos?\b|unit\b|lot\b|pt\b|ptd\b|tb\b|hs\b|parcel\b|suite\b|plot\b|sublot\b|geran\b|mdld\b|gm\b|mbkt\b|mpkt\b|nt\b|town\s+lease\b|post\s+box\b)/i,FA_BARE=/^[a-z]{0,3}[-\s]?\d[\w-]*$/i;   // a house, unit or lot number: the keyword anywhere, or a bare number at the start
 const FA_NAMEWORD=/^(jalan|jln|lorong|lrg|lebuh|solok|medan|taman|tmn|blok|block|aras|level|tingkat|fasa|phase|kg|seri|sri|desa|alam|bukit|bdr|tower|wisma|plaza|menara|ss|usj|pju|pjs|bu|ttdi|sd|pj|kl|casa|villa|vista|indah)$/i;   // these words before a number name a road or a building, not a lot
-// iProperty shows the street but not the house (5/11/2026): No. 16 -> No. 1X, PT 2991 -> PT 29XX, 3C-02-06 -> 3C-02-XX, 16 Jalan Mawar -> 1X Jalan Mawar, Jd 169 Jalan Besar -> Jd 1XX Jalan Besar
-function faMaskNo(t){const part=t.split('-'),last=part.pop();if(part.length)return part.concat('X'.repeat(last.length)).join('-');return t.slice(0,t.length-Math.ceil(t.length/2))+'X'.repeat(Math.ceil(t.length/2))}
+// iProperty shows the street but not the house (5/11/2026): No. 16 -> No. 1X, PT 2991 -> PT 29XX, 3C-02-06 -> 3C-02-0X (8/11/2026, was 3C-02-XX), 16 Jalan Mawar -> 1X Jalan Mawar, Jd 169 Jalan Besar -> Jd 1XX Jalan Besar
+function faMaskNo(t){const half=s=>s.slice(0,s.length-Math.ceil(s.length/2))+'X'.repeat(Math.ceil(s.length/2)),part=t.split('-'),last=part.pop();if(part.length)return part.concat(half(last)).join('-');return half(t)}
 function faMask(addr){return String(addr||'').split(',').map((x,i)=>{const v=x.trim();if(i>0&&/^\d{5}\b/.test(v))return x;
   if(FA_UNIT.test(v)||(i===0&&FA_BARE.test(v)))return x.replace(/[a-z0-9-]*\d[a-z0-9-]*/gi,faMaskNo);
   let y=x.replace(/\b(nos?\.?\s*(?:lot\s*)?)([a-z0-9-]*\d[a-z0-9-]*)/gi,(m,k,t)=>k+faMaskNo(t)).replace(/\b((?:pt|lot)\s+)(\d[a-z0-9-]*)/gi,(m,k,t)=>k+faMaskNo(t));
@@ -2258,12 +2258,92 @@ function faTelegram(r) {
   amen:nearby.amen.length>0,osm:!!(nearby.amen.length||nearby.highway)&&!!nearby.osm};
 }
 
+// iProperty text (8/11/2026, the owner's layout): plain text, house number hidden, contact from the sealed ad pack.
+function faIprop(r) {
+ const a = ADS?.units?.[r[SID]] || {};
+ const miss = [], lines = [], high = isHigh(r);
+ const clean = value => {
+  const s = String(value ?? '').replace(/\s+/g,' ').trim();
+  return /^(?:-|n\/?a|nil|null|unknown|locked2?|xx)?$/i.test(s) ? '' : s;
+ };
+ const address = clean(r[1]), plainType = clean(faType(r,a).plain);
+ const positionText = high ? '' : clean(r[5])+' '+plainType;
+ const end = /\bend[\s-]+(?:unit|lot)\b/i.test(positionText);
+ const corner = /\bcorner\b/i.test(positionText);
+ const position = end && !corner ? 'End Unit' : corner && !end ? 'Corner Lot' :
+  !high && (end || a.corner) ? 'End / corner unit' : '';
+ const type = position && end!==corner ? plainType
+  .replace(/\(?\s*\b(?:end[\s-]+(?:unit|lot)|corner(?:[\s-]+(?:unit|lot))?)\b\s*\)?/ig,' ')
+  .replace(/\s+house\s*$/i,'').trim().replace(/\s+/g,' ') || plainType : plainType;
+ const area = faArea(address).map(clean).filter(Boolean);
+ const district = clean(r[3]), state = clean(r[2]);
+ const parts = address.split(',').map(s=>s.trim());
+ const zip = parts.findIndex(s=>/^\d{5}\b/.test(s));
+ const town = zip < 0 ? '' : parts[zip].replace(/^\d{5}\s*/, '') || parts[zip+1] || '';
+ const project = high ? clean(a.tg_project) || faTelegramProject(parts,area,type,[town,district,state]) : '';
+ const local = high ? [project || type, town || district, state] :
+  area.length && !/^\d/.test(area[0]) && area[0].length<=60 ? area : [district,state];
+ const place = local.filter((v,i,all)=>v && all.findIndex(s=>s.toLowerCase()===v.toLowerCase())===i).join(', ');
+ const money = value => {
+  const s = clean(value);
+  return /^(?:RM\s*)?\d[\d,]*(?:\.\d{1,2})?$/i.test(s) ? num(s) : 0;
+ };
+ const reserve = money(r[7]), rawMarket = money(r[8]);
+ const percentage = reserve && rawMarket ? Math.round(100*(1-reserve/rawMarket)) : 0;
+ const market = !suspect(r) && percentage<90 ? rawMarket : 0;
+ const discount = reserve && market>reserve && percentage>0 ? percentage : 0;
+ const pending = stOf(r)==='unsold';
+ lines.push('Auction Sale'+(place?', '+place:''));
+ if (discount && !pending) lines.push('', 'Below Market Value '+discount+'%');
+ if (address) lines.push('', 'Address: '+faMask(address));
+ const details = [], fact = value => { if (value) details.push('- '+value); };
+ fact(project);
+ fact(type);
+ if (position && position.toLowerCase()!==type.toLowerCase()) fact(position);
+ const size = v => clean(v).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 sqft');
+ if (!high && clean(r[10])) fact('Land Size : '+size(r[10]));
+ if (clean(r[11])) fact((high?'Size : ':'Built Up : ')+size(r[11]));
+ fact(clean(r[9]).toUpperCase());
+ const restriction = ['Bumi Lot','Malay Reserve','Native Land'].includes(a.tg_restriction) ? a.tg_restriction : '';
+ fact(restriction);
+ const room = value => /^(?:[1-9]\d?)(?:\s*\+\s*\d{1,2})?$/.test(clean(value)) ? clean(value).replace(/\s+/g,'') : '';
+ const bed = room(a.bed) || room(r[23]), bath = room(a.bath) || room(r[24]);
+ const car = room(a.car) || room(r[25]);
+ const rooms = [bed && bed+(bed==='1'?' Bedroom':' Bedrooms'),bath && bath+(bath==='1'?' Bathroom':' Bathrooms')].filter(Boolean);
+ if (rooms.length) fact((!high || a.src==='ads'?'Approx. ':'')+rooms.join(', '));
+ else if (high || /terrace|bungalow|semi.?detached|townhouse/i.test(type)) miss.push('fa_m_rooms');
+ if (car) fact(car+(car==='1'?' Carpark':' Carparks'));
+ if (details.length) lines.push('', 'DETAILS', ...details);
+ const prices = [];
+ if (reserve) prices.push((pending?'Last Auction Price : ':'Force Sale  \t\t: ')+faRm(reserve));
+ else miss.push('fa_m_price');
+ if (market) prices.push('Market Value\t: '+faRm(market));
+ else miss.push('fa_m_mv');
+ if (prices.length) lines.push('', ...prices);
+ const when = dt(r[12]) ? new Date(dt(r[12])) : null;
+ if (pending) lines.push('', 'Auction Date        : Pending next auction');
+ else if (when) {
+  lines.push('', 'Auction Date        : '+when.getDate()+' '+FA_MON[when.getMonth()].slice(0,3)+' '+when.getFullYear());
+  if (isExp(r)) miss.push('fa_m_past');
+ } else miss.push('fa_m_date');
+ lines.push('', 'Kindly note the following:',
+  '+ NO INSIDE VIEWING. Self-survey from outside only',
+  '+ Cash ready: 10% Deposit | 5% legal cost | 2-5% misc',
+  '', 'Subscribe telegram channel for latest listing : https://t.me/lelongbid8');
+ // The pack's contact lines, without the colon after Contact and without the agency after the REN number.
+ const contact = Array.isArray(ADS?.contact) ? ADS.contact.map(clean).filter(Boolean) : [];
+ if (contact.length) lines.push('', ...contact.map(v=>v.replace(/^Contact:$/i,'Contact').replace(/^(REN:\s*\d+)\s*\(.*\)$/i,'$1')));
+ else miss.push('fa_m_contact');
+ const text = lines.join('\n').replace(/\p{Extended_Pictographic}️?/gu,'').trim();
+ return {text,miss,src:bed?(a.src||''):'',n:a.n||0,amen:false,osm:false};
+}
+
 function faOpen(r,kind){
  if (!faOn()) return;
  const titleKey = {mudah:'fa_mudah',iprop:'fa_iprop',telegram:'fa_telegram'}[kind];
  if (!titleKey) return;
  const title = tx(titleKey);
- const ad = kind==='telegram'?faTelegram(r):faAd(r,kind);
+ const ad = kind==='telegram'?faTelegram(r):kind==='iprop'?faIprop(r):faAd(r,kind);
  const src=ad.src==='pos'?tx('fa_src_pos'):ad.src==='ads'?tx('fa_src_ads').replace('{n}',ad.n):'';
  openModal(title,(ad.miss.length?'<p class="fa-note">'+esc(tx('fa_miss'))+' '+ad.miss.map(k=>esc(tx(k))).join(', ')+'</p>':'')+(src?'<p class="fa-src">'+esc(src)+'</p>':'')+(ad.amen?'<p class="fa-src">'+esc(tx('fa_amen'))+'</p>':'')+(ad.osm?'<p class="fa-src">Amenities: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors (ODbL)</a></p>':'')+'<textarea class="fa-text" readonly aria-label="'+esc(title)+'">'+esc(ad.text)+'</textarea>',
   '<button class="btn" type="button" id="faAgain">'+esc(tx('fa_again'))+'</button><button class="btn" type="button" data-close>'+esc(tx('close'))+'</button>');
