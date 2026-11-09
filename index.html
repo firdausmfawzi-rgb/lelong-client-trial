@@ -581,6 +581,25 @@ body{padding-block-end:100px}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
 <script>/* apply the client's saved light / dark choice, text size and language before first paint (no flash); KP = this site's settings prefix */var ISAGENT=false;var KP='client.',TRIAL=true,LANDING='premium/',SIP_URL='https://client.lelongbidgroup.com/premium/#sip',TIER='premium';if(TRIAL)document.documentElement.classList.add('trial');try{var _t=localStorage.getItem('client.theme');if(_t==='dark')document.documentElement.setAttribute('data-theme','dark');var _s=localStorage.getItem(KP+'size');if(_s==='l'||_s==='xl')document.documentElement.setAttribute('data-size',_s);if(localStorage.getItem(KP+'lang')==='ms')document.documentElement.lang='ms'}catch(e){}</script>
+<script>
+/* Agent link (owner order, 9/11/2026): a unit link a client sends from the free preview (https://client.lelongbidgroup.com/#<share id>)
+   opens the same unit on the owner's own page instead, once THIS browser was marked with ?agent=on (?agent=off clears it; the mark
+   lives in this browser only). Only the owner's free preview (KP client., TRIAL) does any of this. The main site resolves the share
+   id itself (sharedId): the owner's stored code opens his agent view, anyone else sees the free preview of that unit. The WhatsApp
+   message to the owner (agentLink) already carries his page's link, so the mark is only for links that reach him another way. */
+(function(){try{
+ if(!(TRIAL&&KP==='client.'))return;
+ var q=new URLSearchParams(location.search),a=q.get('agent');
+ if(a==='on'||a==='off'){if(a==='on')localStorage.setItem('client.agentlink','1');else localStorage.removeItem('client.agentlink');
+  q.delete('agent');history.replaceState(history.state,'',location.pathname+(q.toString()?'?'+q.toString():'')+location.hash);
+  document.addEventListener('DOMContentLoaded',function(){var d=document.createElement('div');d.setAttribute('role','status');
+   d.style.cssText='position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9999;background:#0f2a44;color:#fff;border:1.5px solid #c9a227;border-radius:14px;padding:12px 14px;font:600 14px/1.4 system-ui,sans-serif;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)';
+   d.textContent=a==='on'?'Mod ejen (pelayar ini sahaja): pautan unit dari laman ini dibuka di lelongbidgroup.com. Tekan di sini untuk batal. / Agent mode (this browser only): unit links from this site open on lelongbidgroup.com. Tap here to undo.':'Mod ejen dimatikan: pautan unit dibuka di sini semula. / Agent mode off: unit links open here again.';
+   if(a==='on'){d.style.cursor='pointer';d.onclick=function(){try{localStorage.removeItem('client.agentlink')}catch(e){}d.onclick=null;d.textContent='Mod ejen dimatikan. / Agent mode off.';setTimeout(function(){if(d.parentNode)d.remove()},2500)}}
+   document.body.appendChild(d);setTimeout(function(){if(d.parentNode)d.remove()},9000)})}
+ if(location.hash.length>1&&localStorage.getItem('client.agentlink')==='1'){location.replace('https://lelongbidgroup.com/'+location.hash)}
+}catch(e){}})();
+</script>
 <style id="aiCss">
 /* AI assistant (2/11/2026): the character button, the chat panel, the guided-tour spotlight */
 /* AI_HIDDEN (2/11/2026, owner order): character hidden until the system is improved; delete the next line to show it again */
@@ -1249,6 +1268,7 @@ let sharedId=(location.hash||'').slice(1)||null;   // a shared link's unit: its 
 if(sharedId){const m=DATA.find(r=>r[20]===sharedId||r[SID]===sharedId);sharedId=m?m[20]:null}
 const track=gtrack;
 const BASE=location.origin+location.pathname;
+const agentLink=r=>(TRIAL&&KP==='client.')?'https://lelongbidgroup.com/#'+r[20]:BASE+'#'+r[20];   // 9/11/2026: a WhatsApp message to the owner from his free preview links to his OWN page, which opens that unit in his agent view (his stored code), and shows the free preview of the unit to anyone else
 const ok=v=>v&&v!=='-'&&v!=='N/A';
 const locked=v=>TRIAL&&v==='LOCKED';   // trial/data.json puts LOCKED where the paid value was
 const locked2=v=>v==='LOCKED2';   // trial/data.json: a VIP Investor Plan value; on the live site the plan is the member's TIER
@@ -1968,7 +1988,7 @@ function cdChip(s){const d=dt(s);if(!d)return '';const n=Math.round((d-T0)/864e5
  return '<span class="cd">'+(n===-1?tx('cd_yest'):tx('cd_ago',{n:-n}))+'</span>'}
 // WhatsApp to the agent with the unit already written in (ended units: ask for similar ones)
 // 'Request POS from agent' (26/10/2026): members WhatsApp the agent for the Proclamation of Sale; the free preview shows the Premium lock
-function waPos(r){const L=[tx('wa_pos'),'',pv(typeName(r))+', '+pv(r[1]),tx('wa_price',{p:pv(r[7])}),tx('wa_date',{d:fmtDay(r[12])+(ok(r[13])?' '+r[13]:'')}),BASE+'#'+r[20]];return AGENT.wa+'?text='+encodeURIComponent(L.join('\n'))}
+function waPos(r){const L=[tx('wa_pos'),'',pv(typeName(r))+', '+pv(r[1]),tx('wa_price',{p:pv(r[7])}),tx('wa_date',{d:fmtDay(r[12])+(ok(r[13])?' '+r[13]:'')}),agentLink(r)];return AGENT.wa+'?text='+encodeURIComponent(L.join('\n'))}
 // 'Download POS' (agents only, 28/10/2026): the agent's own code goes to the portal, which sends the POS PDF from the public source (no login)
 const PORTAL='https://agent.lelongbidgroup.com';
 const PDFI='<svg class="pdfi" viewBox="0 0 24 28" width="24" height="28" aria-hidden="true"><path d="M3 1h12l7 7v18a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#d93025"/><path d="M15 1v6a1 1 0 0 0 1 1h6z" fill="#f6aea9"/><text x="12" y="21.5" text-anchor="middle" font-size="7.6" font-weight="800" font-family="Arial,sans-serif" fill="#fff">PDF</text></svg>';
@@ -1977,7 +1997,7 @@ function posDownload(id){const f=document.createElement('form');f.method='POST';
 function posBtn(r){if(ISAGENT&&ACODE&&!TRIAL)return '<div class="posrow"><button type="button" class="posdl" data-id="'+esc(r[20])+'">'+PDFI+'<span><b>'+tx('pos_dl')+'</b></span></button><div class="agflag">'+tx('pos_only')+'</div></div>';
  return '<div class="posrow">'+(TRIAL?'<span class="pos-lbl">'+PDFI+tx('pos_btn')+'</span>'+lockLink():'<a class="posbtn" href="'+esc(waPos(r))+'" target="_blank" rel="noopener">'+PDFI+tx('pos_btn')+'</a>')+'</div>'}
 function waUnit(r,st){const end=st==='sold'||st==='calloff';
- const L=[st==='nonlaca'?tx('wa_unit_nl'):end?tx('wa_unit_end',{st:stName(st)}):tx('wa_unit'),'',pv(typeName(r))+', '+pv(r[1]),tx('wa_price',{p:pv(r[7])}),tx('wa_date',{d:fmtDay(r[12])+(ok(r[13])?' '+r[13]:'')}),BASE+'#'+r[20]];
+ const L=[st==='nonlaca'?tx('wa_unit_nl'):end?tx('wa_unit_end',{st:stName(st)}):tx('wa_unit'),'',pv(typeName(r))+', '+pv(r[1]),tx('wa_price',{p:pv(r[7])}),tx('wa_date',{d:fmtDay(r[12])+(ok(r[13])?' '+r[13]:'')}),agentLink(r)];
  return AGENT.wa+'?text='+encodeURIComponent(L.join('\n'))}
 const nthTxt=r=>{if(!ok(r[14]))return '';const v=String(r[14]);return esc(tx('nth',{v:LANG==='ms'?((v.match(/\d+/)||[v])[0]):v}))};
 function facts(r,condo){const f=[];
@@ -2561,7 +2581,7 @@ function drawList(){$('list').innerHTML=cardsHtml(0,SHOWN);
  unitCounter.refresh();
  setTimeout(()=>document.querySelectorAll('.hero img:not(.ok)').forEach(i=>{if(i.complete)i.classList.add('ok')}),1500)}
 function favMsg(fr){const rs=fr.slice(0,15),L=[tx('fav_wa'),''];
- rs.forEach((r,i)=>{L.push((i+1)+'. '+pv(typeName(r))+', '+pv(r[1]));L.push('   '+pv(r[7])+' · '+fmtDay(r[12])+(ok(r[13])?' '+r[13]:''));L.push('   '+BASE+'#'+r[20]);L.push('')});
+ rs.forEach((r,i)=>{L.push((i+1)+'. '+pv(typeName(r))+', '+pv(r[1]));L.push('   '+pv(r[7])+' · '+fmtDay(r[12])+(ok(r[13])?' '+r[13]:''));L.push('   '+agentLink(r));L.push('')});
  if(fr.length>rs.length)L.push(tx('fav_more',{n:fr.length-rs.length}));return L.join('\n')}
 function favUI(){const fr=DATA.filter(r=>FAV.has(r[20])),n=fr.length;
  $('favBtn').textContent=tx('fav_btn',{n});$('favBtn').setAttribute('aria-pressed',String(favMode));
