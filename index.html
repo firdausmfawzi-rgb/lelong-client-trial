@@ -1805,7 +1805,7 @@ function seg(el,opts,get,set){el.innerHTML=opts.map(o=>'<button type="button" da
 // each status button shows how far its auction dates reach: Active = ahead of today, No bidder / Cancelled / Sold = back from today
 const spanN={};['active','unsold','calloff','sold','nonlaca'].forEach(st=>{const ds=DATA.filter(r=>stOf(r)===st).map(r=>dt(r[12])).filter(d=>d>0);
  spanN[st]=ds.length?Math.max(1,Math.round(Math.abs((st==='active'?Math.max(...ds):Math.min(...ds))-T0)/864e5)):0});
-const sp=st=>{const n=spanN[st];if(!n)return '';const t=n>60?tx('months',{n:Math.round(n/30.4)}):tx(n===1?'day1':'days',{n});return tx(st==='active'?'sp_next':'sp_last',{t})};
+const sp=st=>{const n=spanN[st];if(!n)return '';const t=n>60?tx('months',{n:n>366?Math.ceil(n/30.44):Math.round(n/30.4)}):tx(n===1?'day1':'days',{n});return tx(st==='active'?'sp_next':'sp_last',{t})};   // 10/11/2026: past one year (Sold kept forever, the owner's agent view) any part month counts: 372 days = 13 months, not 12
 function segUI(){
  seg($('statusSeg'),[['available',stName('available')+' ('+DATA.filter(isAvail).length+')'],['active',stName('active')+' ('+cnt.active+sp('active')+')'],['unsold',stName('unsold')+' ('+cnt.unsold+sp('unsold')+')'],['calloff',stName('calloff')+' ('+cnt.calloff+sp('calloff')+')'],['sold',stName('sold')+' ('+cnt.sold+sp('sold')+')'],['nonlaca',stName('nonlaca')+' ('+cnt.nonlaca+sp('nonlaca')+')']],0,v=>{status=v;favMode=false;clearShared()});
  const vn=$('vipNote');if(vn){if(canSip()){vn.hidden=!META.vip_err;vn.innerHTML=META.vip_err?tx('vip_err'):''}else{vn.hidden=false;vn.innerHTML=tx('vip_hist')+' '+lockLink2()}}   // Premium / free preview: what the VIP plan adds here
