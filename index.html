@@ -1308,7 +1308,7 @@ const satUrl=u=>{const m=/[?&]query=([^&#]+)/.exec(u||'');return m?'https://maps
 // r[32] photo = 'u:<hash>' (this unit) or 'b:<hash>' (its building), from our own listing posts; trial pages keep the illustration
 // chips on the photo (palette A, 28/10/2026): the discount in gold and the days left, for units that can still be bought
 const isNew=r=>{const f=Date.parse(String(r[22]||'').slice(0,10)+'T00:00:00');return f>0&&(T0-f)/864e5<=2};   // first seen in the last 3 days
-function heroChips(r){const s=stOf(r);if(s!=='active'&&s!=='unsold')return '';const b=bmvTxt(r,1),d=dt(r[12]),c=d>=T0?cdChip(r[12]):'',n=Math.round((d-T0)/864e5);
+function heroChips(r){const s=stOf(r);if(s!=='active'&&s!=='unsold'&&!soldOpen(s))return '';const b=bmvTxt(r,1),d=dt(r[12]),c=d>=T0?cdChip(r[12]):'',n=Math.round((d-T0)/864e5);
  return (b?'<span class="hchip gold">'+esc(b)+'</span>':'')+(c?'<span class="hchip due'+(n<=1?' soon':n<=7?' week':'')+'">'+c+'</span>':'')
   +(isNew(r)?'<span class="hchip new">'+tx('new_tag')+'</span>':'')}
 // price per sq ft (built-up known) and how many times the reserve price was cut since the first recorded auction (members only);
@@ -1424,6 +1424,7 @@ const OUTC={unsold:1,calloff:1,sold:1};
 const stOf=r=>r[17]==='Non-LACA'&&isExp(r)&&!OUTC[r[26]]?'nonlaca':OUTC[r[26]]?r[26]:(isExp(r)?'expired':'active');   // 4/11/2026: published data keeps a Non-LACA result only when it is accepted (nonlaca.confirmed)
 const RECENT=30*864e5;const liveUnsold=r=>stOf(r)==='unsold'&&dt(r[12])>=T0-RECENT;   // a 'No bidder' unit still worth watching: ended within 30 days (older ones are history only)
 const isAvail=r=>stOf(r)==='active'||liveUnsold(r);
+const soldOpen=st=>st==='sold'&&faOn();   // 10/11/2026: in the owner's agent view a Sold unit is laid out like an Active one (full brightness, market value, savings, score, For Admin); the Sold tag stays. Everyone else sees it dimmed as before
 const dkey=r=>{const t=dt(r[12])||9e15;return t>=T0?t:2e15-t};
 // 'Complete info first' (2/11/2026): units with a real photo and an exact map pin, then photo only, then pin only, then the rest
 const hasPhoto=r=>/^[ub]:[0-9a-f]{20}$/.test(String(r[32]||''));const hasPin=r=>r[35]===true||/query_place_id=/.test(String(r[4]||''));
@@ -2405,7 +2406,7 @@ function faBtn(r,st){
  if(!faOn())return '';
  const ended=st!=='active'&&st!=='unsold';
  const tracker=dadCard(r,ended);
- if(ended)return tracker;
+ if(ended&&!soldOpen(st))return tracker;
  const id=esc(r[20]);
  return tracker+'<div class="fa"><button type="button" class="fa-btn" aria-expanded="false" data-id="'+id+'">'+esc(tx('fa_btn'))+'</button><div class="fa-menu" hidden><button type="button" class="fa-opt" data-k="mudah" data-id="'+id+'">'+esc(tx('fa_mudah'))+'</button><button type="button" class="fa-opt" data-k="iprop" data-id="'+id+'">'+esc(tx('fa_iprop'))+'</button><button type="button" class="fa-opt" data-k="telegram" data-id="'+id+'">'+esc(tx('fa_telegram'))+'</button><button type="button" class="fa-opt fa-com" data-k="com" data-id="'+id+'">'+esc(faComShort(faC(r)))+'</button>'+'</div></div>';
 }
@@ -2418,14 +2419,14 @@ function posCard(r){if(ISAGENT&&ACODE&&!TRIAL)return '<button type="button" clas
 function favBtn(r,fav){return '<button type="button" class="fav" data-id="'+esc(r[20])+'" aria-pressed="'+fav+'">'+tx(fav?'saved':'save')+'</button>'}
 function shareBtn(r){return TRIAL?'':'<button type="button" class="sh" data-id="'+esc(r[20])+'" aria-label="'+esc(tx('share'))+'">'+tx('share')+'</button>'}
 function card(r,i){
- const st=stOf(r),ex=st!=='active'&&st!=='unsold',simple=VIEW==='simple'&&!PRINTING;
+ const st=stOf(r),end=st!=='active'&&st!=='unsold',ex=end&&!soldOpen(st),simple=VIEW==='simple'&&!PRINTING;
  // fire only for a real discount: not shown for 0-9% below market value (or for ended units)
  const fire=!ex&&(!/\d/.test(String(r[6]||''))||num(r[6])>=10);
  const bt=bmvTxt(r),cn=nthTxt(r),fav=FAV.has(r[20]);
  const cal=!ex&&dt(r[12])>=T0?calUrl(r):'';
  let hz=hero(r);if(i<2)hz=hz.replace('loading="lazy"','loading="eager" fetchpriority="high"');   // the first photos are what the client sees first
  const onPhoto=!!(hz&&bt&&!ex);
- return '<article class="card v2'+(ex?' expired':'')+(simple?' simple':'')+(sharedId?' hl':'')+'" data-k="'+i+'" data-id="'+esc(r[20])+'">'+hz+(ex?'<div class="exp-tag '+st+'">'+tagText(r,st)+'</div>':'')
+ return '<article class="card v2'+(ex?' expired':'')+(simple?' simple':'')+(sharedId?' hl':'')+'" data-k="'+i+'" data-id="'+esc(r[20])+'">'+hz+(end?'<div class="exp-tag '+st+'">'+tagText(r,st)+'</div>':'')
  +kindLine(r,cn)
  +'<div class="head"><span class="num">'+(i+1)+'</span><div class="addr">'+hlAddr(r[1])+'</div>'+(TRIAL?'':'<button type="button" class="cpy" data-id="'+esc(r[20])+'" aria-label="'+esc(tx('copy_al'))+'" title="'+esc(tx('copy_al'))+'">'+CPY+'</button>')+'</div>'
  +railWalkNote(r)+priceBox(r,ex,fire,bt,onPhoto)
@@ -2438,12 +2439,12 @@ function card(r,i){
 }
 // Full details of one unit (1/11/2026): everything, nothing folded, in one window; the Back button closes it (modal history entry)
 function detailHtml(r){
- const st=stOf(r),ex=st!=='active'&&st!=='unsold',condo=(r[21]===CATS[0]||r[21]===CATS[5]);
+ const st=stOf(r),end=st!=='active'&&st!=='unsold',ex=end&&!soldOpen(st),condo=(r[21]===CATS[0]||r[21]===CATS[5]);
  const fire=!ex&&(!/\d/.test(String(r[6]||''))||num(r[6])>=10);
  const bt=bmvTxt(r),cn=nthTxt(r),fav=FAV.has(r[20]);
  const cal=!ex&&dt(r[12])>=T0?calUrl(r):'';
  const hz=hero(r).replace('loading="lazy"','loading="eager"');
- return '<div class="card detail'+(ex?' expired':'')+'" data-id="'+esc(r[20])+'">'+hz+(ex?'<div class="exp-tag '+st+'">'+tagText(r,st)+'</div>':'')
+ return '<div class="card detail'+(ex?' expired':'')+'" data-id="'+esc(r[20])+'">'+hz+(end?'<div class="exp-tag '+st+'">'+tagText(r,st)+'</div>':'')
  +kindLine(r,'',true)+'<div class="head"><div class="addr">'+esc(r[1])+'</div>'+(TRIAL?'':'<button type="button" class="cpy" data-id="'+esc(r[20])+'" aria-label="'+esc(tx('copy_al'))+'" title="'+esc(tx('copy_al'))+'">'+CPY+'</button>')+'</div>'
  +railWalkNote(r)+priceBox(r,ex,fire,bt,false,true)
  +(st==='unsold'&&liveUnsold(r)?unsoldNote(r):'')
