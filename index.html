@@ -2408,7 +2408,7 @@ function faBtn(r,st){
  const tracker=dadCard(r,ended);
  if(ended&&!soldOpen(st))return tracker;
  const id=esc(r[20]);
- const soldCom=soldOpen(st)?'<button type="button" class="fa-opt fa-com fa-soldcom" data-k="com" data-id="'+id+'">'+esc(faComShort(faC(r)))+'</button>':'';   // 10/11/2026: a Sold unit shows its agent commission on the card itself, not only inside the menu
+ const soldCom=(soldOpen(st)||!ended)?'<button type="button" class="fa-opt fa-com fa-soldcom" data-k="com" data-id="'+id+'">'+esc(faComShort(faC(r)))+'</button>':'';   // 10/11/2026: Sold, Active and No bidder units show their agent commission on the card itself, not only inside the menu
  return tracker+soldCom+'<div class="fa"><button type="button" class="fa-btn" aria-expanded="false" data-id="'+id+'">'+esc(tx('fa_btn'))+'</button><div class="fa-menu" hidden><button type="button" class="fa-opt" data-k="mudah" data-id="'+id+'">'+esc(tx('fa_mudah'))+'</button><button type="button" class="fa-opt" data-k="iprop" data-id="'+id+'">'+esc(tx('fa_iprop'))+'</button><button type="button" class="fa-opt" data-k="telegram" data-id="'+id+'">'+esc(tx('fa_telegram'))+'</button><button type="button" class="fa-opt fa-com" data-k="com" data-id="'+id+'">'+esc(faComShort(faC(r)))+'</button>'+'</div></div>';
 }
 function calBtn(cal){return cal?'<a class="calbtn ic" href="'+esc(cal)+'" target="_blank" rel="noopener">'+CALI+tx('cal_short')+'</a>':''}
