@@ -62,7 +62,7 @@ h1{font-family:var(--display);font-size:1.35rem;margin:4px 0 2px;text-wrap:balan
 .top input{flex:1;min-width:0}
 .top .qwrap{flex:1;min-width:0;position:relative;display:flex}.top .qwrap input{padding-right:44px}   /* search button inside the box, the browser's own clear x sits left of it */
 .qgo{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:38px;height:38px;min-height:0;padding:0;border:0;border-radius:8px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;cursor:pointer}.qgo svg{width:20px;height:20px}
-.hd-acts .top-lang{flex:0 0 auto;display:flex;gap:0}.hd-acts .top-lang button{min-height:44px;min-width:44px;padding:0 10px;font-weight:700;border-radius:0}.hd-acts .top-lang button:first-child{border-radius:10px 0 0 10px}.hd-acts .top-lang button:last-child{border-radius:0 10px 10px 0;margin-left:-1px}@media (max-width:420px){.hd-acts .top-lang button{min-width:40px;padding:0 7px;font-size:.9rem}}.top .top-lang{flex:0 0 auto;display:flex;gap:0}.top .top-lang button{min-height:46px;padding:0 8px;font-weight:700;border-radius:0}.top .top-lang button:first-child{border-radius:10px 0 0 10px}.top .top-lang button:last-child{border-radius:0 10px 10px 0;margin-left:-1px}
+.hd-acts .top-lang{flex:0 0 auto;display:flex;gap:0}.hd-acts .top-lang button{min-height:44px;min-width:44px;padding:0 10px;font-weight:700;border-radius:0}.hd-acts .top-lang button:first-child{border-radius:10px 0 0 10px}.hd-acts .top-lang button:last-child{border-radius:0 10px 10px 0;margin-left:-1px}@media (max-width:420px){.hd-acts .top-lang button{min-width:40px;padding:0 7px;font-size:.9rem}}.top .top-lang.tl2,.top #themeTop{display:none}.top.stuck .top-lang.tl2{display:flex}.top.stuck #themeTop{display:inline-flex;align-items:center;justify-content:center}.top .top-lang{flex:0 0 auto;display:flex;gap:0}.top .top-lang button{min-height:46px;padding:0 8px;font-weight:700;border-radius:0}.top .top-lang button:first-child{border-radius:10px 0 0 10px}.top .top-lang button:last-child{border-radius:0 10px 10px 0;margin-left:-1px}
 #themeTop{flex:0 0 auto;min-height:46px;min-width:44px;padding:0 8px;font-size:1.15rem}#openTop{flex:0 0 auto;padding:0 12px}
 @media (max-width:420px){.top{gap:6px}.top input{padding-left:10px;padding-right:8px}.top .top-lang button{padding:0 7px;font-size:.92rem}#openTop{padding:0 10px}}
 @media (max-width:699px){.top.qopen .top-lang,.top.qopen #themeTop,.top.qopen #openTop{display:none}}   /* phones: while typing, the search box takes the whole row */
@@ -696,6 +696,8 @@ body{padding-block-end:100px}
 <div class="start"><button type="button" class="qf-btn main" id="qfBtn" disabled><span data-i18n="qf_btn">🔎 Quick Find</span><small data-i18n="qf_sub">3 easy questions</small></button><button type="button" class="qf-btn" id="guideBtn"><span data-i18n="guide_btn">❓ How to use</span><small data-i18n="guide_sub">this page</small></button></div>
 <div class="top">
 <span class="qwrap"><input id="q" type="search" enterkeyhint="search" placeholder="Address or bank" data-i18n-ph="search_ph" aria-label="Search address or bank" data-i18n-al="search_al"><button type="button" class="qgo" id="qGo" aria-label="Search and go to the first listing" data-i18n-al="search_go_al"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button></span>
+<div class="tgrp top-lang tl2" role="group" aria-label="Language / Bahasa"><button type="button" data-l="en" lang="en">EN</button><button type="button" data-l="ms" lang="ms">BM</button></div>
+<button class="btn theme-btn" id="themeTop" type="button" aria-label="Light / dark mode" title="Light / dark mode">🌙</button>
 <button class="btn" id="openTop" type="button"><span data-i18n="filter">Filter</span><span class="badge" hidden></span></button>
 </div>
 <div class="fchips" id="fchips" hidden></div>
@@ -2787,7 +2789,7 @@ function themeUI(){const d=isDark(),b=$('themeBtn');if(!b)return;b.textContent=d
  document.querySelectorAll('[data-theme-toggle]').forEach(x=>{x.textContent=(d?'☀️ ':'🌙 ')+lbl});
  const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',d?'#0b1520':'#0f2a44')}
 function toggleTheme(){const t=isDark()?'light':'dark';document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('client.theme',t)}catch(e){}themeUI();track('theme_change',{theme:t})}
-$('themeBtn').onclick=toggleTheme;THEMEUI=themeUI;THEMETOGGLE=toggleTheme;
+$('themeBtn').onclick=toggleTheme;$('themeTop').onclick=toggleTheme;(()=>{const hd=document.querySelector('.hd'),top=document.querySelector('.top');if(!hd||!top)return;if('IntersectionObserver' in window)new IntersectionObserver(es=>top.classList.toggle('stuck',!es[0].isIntersecting)).observe(hd);else top.classList.add('stuck')})();THEMEUI=themeUI;THEMETOGGLE=toggleTheme;
 if(darkMQ&&darkMQ.addEventListener)darkMQ.addEventListener('change',()=>{if(!document.documentElement.getAttribute('data-theme'))themeUI()});
 themeUI();
 $('daerah').addEventListener('change',e=>{const c=e.target;if(!c||c.type!=='checkbox')return;c.checked?selD.add(c.value):selD.delete(c.value);daerahMeta();track('filter_district',{count:selD.size});render()});
