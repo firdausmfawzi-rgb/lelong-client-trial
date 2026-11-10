@@ -372,6 +372,7 @@ html.trial #cyNote,html.trial #bmvSeg,html.trial #cyBtn,html.trial #cyPanel{disp
 .aview-note{display:inline-block;margin:6px 0 2px;padding:5px 10px;border-radius:8px;background:var(--warn-bg);color:var(--warn);font-weight:700;font-size:.85rem}
 /* "Agentic AI Powered Data" right of the membership label, on every tier and the free preview (29/10/2026): cyberpunk neon tag - flowing neon frame, glowing gradient
    text, a short glitch every few seconds, CRT scanlines, cut corners; dark in both themes; no motion for prefers-reduced-motion */
+.vbox{--v-ag:#b8891c;--v-cl:#1d7a46;--v-agent:#b8891c;--v-vip:#1d4268;--v-prem:#8a6512;--v-free:#7a8794;margin:6px 0 14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 2px 10px rgba(15,42,68,.06)}[data-theme="dark"] .vbox{--v-ag:#e2bd52;--v-cl:#7fd39a;--v-agent:#e2bd52;--v-vip:#7fa6d6;--v-prem:#e6c25a;--v-free:#a7b4c1}.vb-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}.vb-head h3{margin:0;font-size:1.02rem;display:flex;align-items:center;gap:6px}.vb-live{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted);white-space:nowrap}.vb-dot{width:8px;height:8px;border-radius:50%;background:var(--v-cl);box-shadow:0 0 0 0 var(--v-cl);animation:vbPulse 2s infinite}@keyframes vbPulse{0%{box-shadow:0 0 0 0 rgba(29,122,70,.45)}70%{box-shadow:0 0 0 7px rgba(29,122,70,0)}100%{box-shadow:0 0 0 0 rgba(29,122,70,0)}}@media (prefers-reduced-motion:reduce){.vb-dot{animation:none}}.vb-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:10px 12px;margin:0 0 10px;border-radius:12px;background:var(--bg)}.vb-sum .big{font-size:1.6rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}.vb-sum .lbl{color:var(--muted);font-size:.85rem}.vb-split{flex:1 1 100%;display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line);margin-top:6px}.vb-split i{display:block;height:100%}.vb-split .a{background:var(--v-ag)}.vb-split .c{background:var(--v-cl)}.vb-key{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.8rem;color:var(--muted)}.vb-key b{color:var(--fg);font-variant-numeric:tabular-nums}.vb-key .k{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}.vb-key .ka{background:var(--v-ag)}.vb-key .kc{background:var(--v-cl)}.vb-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}@media (max-width:620px){.vb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.vb-card{position:relative;min-width:0;padding:10px 10px 9px;border:1px solid var(--line);border-top:3px solid var(--tc);border-radius:12px;background:var(--surface)}.vb-card .vb-nm{display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;color:var(--tc);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vb-card .vb-nm svg{width:14px;height:14px;flex:none}.vb-card .vb-num{font-size:1.55rem;font-weight:800;line-height:1.1;margin:6px 0 0;font-variant-numeric:tabular-nums}.vb-card .vb-lb{font-size:.72rem;color:var(--muted);margin:0 0 6px}.vb-card .vb-split{height:6px;margin:0 0 6px}.vb-card .vb-key{font-size:.74rem;gap:2px 8px}.vb-foot{display:flex;justify-content:space-between;gap:6px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:.74rem;color:var(--muted)}.vb-foot b{color:var(--fg);font-variant-numeric:tabular-nums}.vb-on{display:inline-flex;align-items:center;gap:4px}.vb-on .vb-dot{width:6px;height:6px;animation:none}.vb-how{margin:10px 0 0;font-size:.8rem;color:var(--muted)}.vb-how summary{cursor:pointer;font-weight:600;color:var(--fg)}.vb-how p{margin:6px 0 0;line-height:1.45}
 .tier-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 2px}.tier-row .tier-tag{margin:0}
 .ai-tag{display:inline-flex;max-width:100%;filter:drop-shadow(0 0 6px rgba(0,240,255,.7)) drop-shadow(0 0 18px rgba(255,43,214,.55)) drop-shadow(0 0 32px rgba(0,240,255,.25));animation:aiHolo 6s steps(1) infinite}
 .ai-in{position:relative;display:inline-flex;align-items:center;gap:8px;padding:9px 18px 9px 12px;background:radial-gradient(120% 160% at 0% 0%,#24104a 0%,#0a0718 50%,#020208 100%);font:800 .84rem/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;isolation:isolate;overflow:hidden;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
@@ -682,6 +683,7 @@ body{padding-block-end:100px}
 <div class="tier-row"><span class="tier-tag" id="tierTag" hidden></span><span class="ai-tag" id="aiTag" role="img" aria-label="Agentic AI Powered Data"><span class="ai-in"><svg class="ai-chip" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M12 2v4M15 2v4M9 18v4M12 18v4M15 18v4M2 9h4M2 12h4M2 15h4M18 9h4M18 12h4M18 15h4"/></svg><span class="ai-txt" data-text="Agentic AI Powered Data">Agentic AI Powered Data</span><i class="ai-cur" aria-hidden="true"></i></span></span></div><p class="aview-note" id="aviewNote" hidden data-i18n="aview_note">This view is for your client</p>
 <p class="upd" id="upd"></p>
 <div class="stats" id="stats" aria-live="polite"></div>
+<div class="vbox" id="vbox" hidden></div>
 <div class="trial-bar" id="trialBar" hidden><span data-i18n="trial_msg">You are viewing the free preview. Full details are for premium members.</span><a class="btn" id="trialCta" href="premium/" data-i18n="lock">Unlock Premium RM50 only</a><button type="button" class="btn" id="haveCode" hidden><svg class="key" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2a7.5 7.5 0 0 0-7.1 9.9L2 17.3V22h4.7l1.2-1.2v-2.3h2.3l1.4-1.4v-2.2h2.2l.9-.9A7.5 7.5 0 1 0 14.5 2zm2 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg><span data-i18n="have_code">I have an access code</span></button></div>
 <div class="tools">
 <div class="tgrp ts" role="group" aria-label="Text size" data-i18n-al="size_al"><button type="button" data-s="" aria-label="Normal text" data-i18n-al="size0">A</button><button type="button" data-s="l" aria-label="Bigger text" data-i18n-al="size1">A+</button><button type="button" data-s="xl" aria-label="Biggest text" data-i18n-al="size2">A++</button></div>
@@ -984,7 +986,7 @@ sort_al:'Sort',s_new:'Newest listing',s_bmv:'Biggest discount',s_date:'Nearest a
 reset:'Reset',reset_all:'Reset all',reset_all_f:'Reset all filters',show_n:'Show {n} units',close:'Close',ok:'OK',count:'{n} / {t} units',count_left:'units left',count_read:'{n} of {t} units remaining in this list',
 empty1:'No {s} units match your filters',empty2:'There are {n} {s} units in total. Reset the filters to see them.',
 empty3:'No bidder, Cancelled and Sold units have auction dates that have already passed, so an Auction Date filter for upcoming dates hides them.',
-f_search:'Search',f_state:'State',f_district:'District',f_cat:'Property Category',f_type:'Type',f_date:'Auction Date',f_imp:'Imported',fl_imp:'Listing Import Date',all_imp:'All import dates ({n})',imp_today:'Today',imp_yday:'Yesterday',imp_last:'Last {n} days',imp_g:'By date',f_cy:'Completion Year',f_price:'Auction Price',f_bmv:'Discount',
+f_search:'Search',f_state:'State',f_district:'District',f_cat:'Property Category',f_type:'Type',f_date:'Auction Date',vs_t:'Page visitors',vs_live:'Live · {t}',vs_today_all:'visits today',vs_vis:'visits today',vs_d7:'7 days',vs_on:'now',vs_how:'How is this counted?',vs_none:'No visits yet today',vs_sub:'Every opening of the page is one visit. Agents and clients are counted apart; a free visitor who used an agent code on the same phone or network counts as an agent.',vs_pg:'Page',vs_today:'Today',vs_7:'7 days',vs_now:'Now',vs_ag:'Agents',vs_cl:'Clients',vs_err:'Visitor counts could not be loaded.',f_imp:'Imported',fl_imp:'Listing Import Date',all_imp:'All import dates ({n})',imp_today:'Today',imp_yday:'Yesterday',imp_last:'Last {n} days',imp_g:'By date',f_cy:'Completion Year',f_price:'Auction Price',f_bmv:'Discount',
 all:'All',all_states:'All states',all_districts:'All districts',n_districts:'{n} districts selected',search_district:'Search district',no_district:'No district found',clear_districts:'Clear districts',done:'Done',
 all_cat:'All categories ({n})',all_type:'All types ({n})',all_dates:'All dates ({n})',n_dates:'{n} dates selected',no_dates:'No dates found',clear_dates:'Clear dates',
 all_years:'All years',n_years:'{n} years selected',no_years:'No completion year found',clear_years:'Clear years',
@@ -1079,7 +1081,7 @@ sort_al:'Susunan',s_new:'Senarai terbaru',s_bmv:'Diskaun paling besar',s_date:'T
 reset:'Set semula',reset_all:'Set semula semua',reset_all_f:'Set semula semua penapis',show_n:'Tunjuk {n} unit',close:'Tutup',ok:'OK',count:'{n} / {t} unit',count_left:'unit lagi',count_read:'{n} daripada {t} unit berbaki dalam senarai ini',
 empty1:'Tiada unit {s} yang sepadan dengan penapis anda',empty2:'Ada {n} unit {s} kesemuanya. Set semula penapis untuk melihatnya.',
 empty3:'Unit Tiada pembida, Dibatalkan dan Terjual mempunyai tarikh lelong yang sudah lepas, jadi penapis Tarikh Lelong untuk tarikh akan datang menyembunyikannya.',
-f_search:'Carian',f_state:'Negeri',f_district:'Daerah',f_cat:'Kategori Hartanah',f_type:'Jenis',f_date:'Tarikh Lelong',f_imp:'Dimasukkan',fl_imp:'Tarikh Listing Dimasukkan',all_imp:'Semua tarikh masuk ({n})',imp_today:'Hari ini',imp_yday:'Semalam',imp_last:'{n} hari lepas',imp_g:'Ikut tarikh',f_cy:'Tahun Siap',f_price:'Harga Lelong',f_bmv:'Diskaun',
+f_search:'Carian',f_state:'Negeri',f_district:'Daerah',f_cat:'Kategori Hartanah',f_type:'Jenis',f_date:'Tarikh Lelong',vs_t:'Pelawat laman',vs_live:'Live · {t}',vs_today_all:'lawatan hari ini',vs_vis:'lawatan hari ini',vs_d7:'7 hari',vs_on:'sekarang',vs_how:'Bagaimana dikira?',vs_none:'Belum ada lawatan hari ini',vs_sub:'Setiap kali laman dibuka = satu lawatan. Ejen dan klien dikira berasingan; pelawat Free yang pernah guna kod ejen di telefon atau rangkaian yang sama dikira ejen.',vs_pg:'Laman',vs_today:'Hari ini',vs_7:'7 hari',vs_now:'Sekarang',vs_ag:'Ejen',vs_cl:'Klien',vs_err:'Kiraan pelawat tidak dapat dimuatkan.',f_imp:'Dimasukkan',fl_imp:'Tarikh Listing Dimasukkan',all_imp:'Semua tarikh masuk ({n})',imp_today:'Hari ini',imp_yday:'Semalam',imp_last:'{n} hari lepas',imp_g:'Ikut tarikh',f_cy:'Tahun Siap',f_price:'Harga Lelong',f_bmv:'Diskaun',
 all:'Semua',all_states:'Semua negeri',all_districts:'Semua daerah',n_districts:'{n} daerah dipilih',search_district:'Cari daerah',no_district:'Tiada daerah dijumpai',clear_districts:'Kosongkan daerah',done:'Siap',
 all_cat:'Semua kategori ({n})',all_type:'Semua jenis ({n})',all_dates:'Semua tarikh ({n})',n_dates:'{n} tarikh dipilih',no_dates:'Tiada tarikh dijumpai',clear_dates:'Kosongkan tarikh',
 all_years:'Semua tahun',n_years:'{n} tahun dipilih',no_years:'Tiada tahun siap dijumpai',clear_years:'Kosongkan tahun',
@@ -1178,7 +1180,7 @@ function applyI18n(){document.documentElement.lang=LANG;const qq=document.getEle
  G('bannerWa').href=AGENT.wa+'?text='+encodeURIComponent(tx('wa_hi'));G('gateWa').href=AGENT.wa+'?text='+encodeURIComponent(tx(RENEW?'gate_wa_renew_msg':'gate_wa_msg'));
  G('bannerCall').href='tel:+6'+AGENT.phone.replace(/\D/g,'');
  const ge=G('gateErr');if(ge.dataset.k)ge.textContent=tx(ge.dataset.k)}
-function setLang(l){if(l!=='en'&&l!=='ms')return;LANG=l;ls.set('lang',l);applyI18n();if(ONLANG)ONLANG();gtrack('language',{lang:l})}
+function setLang(l){if(l!=='en'&&l!=='ms')return;LANG=l;ls.set('lang',l);applyI18n();if(ONLANG)ONLANG();try{if(visitBox.redraw)visitBox.redraw()}catch(e){}gtrack('language',{lang:l})}
 function sizeUI(){const s=document.documentElement.getAttribute('data-size')||'';document.querySelectorAll('[data-s]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.s===s)))}
 function setSize(s){if(s==='l'||s==='xl')document.documentElement.setAttribute('data-size',s);else{s='';document.documentElement.removeAttribute('data-size')}ls.set('size',s);sizeUI();gtrack('text_size',{size:s||'normal'})}
 // One pop-up box for the "?" help, Quick Find and How to use. Esc, Close or a tap outside closes it.
@@ -3067,6 +3069,51 @@ async function loadListings(){if(TRIAL)return RTRIAL?fetch(TRIAL_DATA+'?v='+Date
  ADS=null;if(ISAGENT&&DKEY3&&faOn()){try{const a=await fetch('agent/ads.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(a&&a.ct&&a.kid===ACCESS.akid)ADS=JSON.parse(await gunzip(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(a.iv)},DKEY3,b64(a.ct))))}catch(x){ADS=null}}   // no file yet: the text is built from the listing alone and says what is missing
  if(ISAGENT&&DKEY3&&faOn()){try{const o=await fetch('agent/sold_old.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(o&&o.ct&&o.kid===ACCESS.akid){const oj=JSON.parse(await gunzip(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(o.iv)},DKEY3,b64(o.ct))));const ids=new Set(j.listings.map(x=>x.id));j.listings=j.listings.concat((oj.listings||[]).filter(x=>x&&x.id&&x.outcome==='sold'&&!ids.has(x.id)))}}catch(x){}}   // 10/11/2026: Sold units older than the 12-month history (kept forever), the owner's agent view on the main site only; any failure leaves the page as it was
  return j}
+// visitor counter (11/11/2026, the owner's page and its free preview only): 'in' when the page opens, a beat each minute while it is on
+// screen, 'out' with the seconds when it is left; a random browser id (none after the visitor declined analytics) and a random visit id.
+// The page sent: the view on screen (agent / vip / prem / free); who: agent code, client code, or a visitor without a code.
+const VISIT_API='https://agent.lelongbidgroup.com/api/visit';
+function rid(){try{const a=new Uint8Array(8);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return (Math.random().toString(36).slice(2)+'00000000').slice(0,12)}}
+function visitStart(){try{
+ const h=location.hostname,site=/^(www\.)?lelongbidgroup\.com$/.test(h)?'main':h==='client.lelongbidgroup.com'?'client':'';
+ if(!site||KP!==(site==='main'?'lelong.':'client.'))return;
+ if(/^\/staging/.test(location.pathname)){if(site==='main'&&REALAGENT&&AVIEW==='agent'&&ACODE)visitBox();return}   // staging: the box for checking, no counting
+ const page=REALAGENT?AVIEW:TRIAL?'free':TIER==='sip'?'vip':'prem';
+ let who=REALAGENT?'agent':TRIAL?'visitor':'client';
+ if(site==='client'){try{if(localStorage.getItem('client.agentlink')==='1')who='agent'}catch(e){}}   // the owner's own phone, marked with ?agent=on
+ let v='';try{if(localStorage.getItem('lelong.consent')!=='no'){v=localStorage.getItem(KP+'vid')||'';if(!/^[a-z0-9]{8,32}$/.test(v)){v=rid();localStorage.setItem(KP+'vid',v)}}}catch(e){v=''}
+ let sid=rid(),t0=Date.now(),on=true,beat=null,hid=0;
+ const send=(e,t)=>{const b=JSON.stringify(Object.assign({e,p:page,r:who,s:sid,t:t||0},v?{v}:{}));
+  try{if(navigator.sendBeacon&&navigator.sendBeacon(VISIT_API,new Blob([b],{type:'text/plain'})))return}catch(x){}
+  try{fetch(VISIT_API,{method:'POST',body:b,mode:'cors',keepalive:true,headers:{'Content-Type':'text/plain'}}).catch(()=>{})}catch(x){}};
+ const tick=()=>{clearInterval(beat);beat=setInterval(()=>{if(on)send('ping')},60000)};
+ const out=()=>{if(!on)return;on=false;hid=Date.now();clearInterval(beat);send('out',Math.min(86400,Math.round((Date.now()-t0)/1000)))};
+ const back=()=>{if(on)return;on=true;if(Date.now()-hid>30*60000)sid=rid();t0=Date.now();send('in');tick()};   // back after 30 minutes = a new visit
+ document.addEventListener('visibilitychange',()=>{document.visibilityState==='hidden'?out():back()});
+ addEventListener('pagehide',out);addEventListener('pageshow',e=>{if(e.persisted)back()});
+ send('in');tick();
+ if(site==='main'&&REALAGENT&&AVIEW==='agent'&&ACODE)visitBox();
+}catch(e){}}
+// the counts in the Agent Specialist view (an agent code of this page reads them; clients never see the box)
+function visitBox(){const box=G('vbox');if(!box)return;let J=null;
+ const n=x=>Number(x||0).toLocaleString('en-MY');
+ const split=(a,c)=>{const t=a+c;return '<div class="vb-split" role="img" aria-label="'+esc(tx('vs_ag')+' '+a+', '+tx('vs_cl')+' '+c)+'">'+(t?'<i class="a" style="width:'+(100*a/t).toFixed(1)+'%"></i><i class="c" style="width:'+(100*c/t).toFixed(1)+'%"></i>':'')+'</div>'};
+ const key=(a,c,one)=>'<div class="vb-key"><span><i class="k ka"></i>'+esc(tx('vs_ag'))+' <b>'+n(a)+'</b></span>'+(one?'':'<span><i class="k kc"></i>'+esc(tx('vs_cl'))+' <b>'+n(c)+'</b></span>')+'</div>';
+ const draw=()=>{if(!J)return;const P=['agent','vip','prem','free'];
+  const ta=P.reduce((x,p)=>x+J.pages[p].agent.today.visits,0),tc=P.reduce((x,p)=>x+J.pages[p].client.today.visits,0);
+  const t=String(J.at||'').slice(11,16)||new Date().toTimeString().slice(0,5);
+  const cards=P.map(p=>{const g=J.pages[p],o=J.online[p],one=p==='agent',a=g.agent.today.visits,c=one?0:g.client.today.visits;
+   return '<div class="vb-card" style="--tc:var(--v-'+p+')"><div class="vb-nm"><svg viewBox="0 0 24 24" aria-hidden="true">'+TAG[p][1]+'</svg>'+esc(TAG[p][0])+'</div>'
+    +'<div class="vb-num">'+n(a+c)+'</div><div class="vb-lb">'+esc(tx('vs_vis'))+'</div>'+split(a,c)+key(a,c,one)
+    +'<div class="vb-foot"><span>'+esc(tx('vs_d7'))+' <b>'+n(g.agent.d7.visits+(one?0:g.client.d7.visits))+'</b></span><span class="vb-on"><i class="vb-dot"></i><b>'+n(o.agent+(one?0:o.client))+'</b> '+esc(tx('vs_on'))+'</span></div></div>'}).join('');
+  box.innerHTML='<div class="vb-head"><h3>👥 '+esc(tx('vs_t'))+'</h3><span class="vb-live"><i class="vb-dot"></i>'+esc(tx('vs_live',{t}))+'</span></div>'
+   +'<div class="vb-sum"><span class="big">'+n(ta+tc)+'</span><span class="lbl">'+esc(ta+tc?tx('vs_today_all'):tx('vs_none'))+'</span>'+key(ta,tc,false)+split(ta,tc)+'</div>'
+   +'<div class="vb-grid">'+cards+'</div>'
+   +'<details class="vb-how"><summary>'+esc(tx('vs_how'))+'</summary><p>'+esc(tx('vs_sub'))+'</p></details>';
+  box.hidden=false};
+ const load=()=>fetch(VISIT_API,{headers:{Authorization:'Bearer '+ACODE},cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(r.status)).then(j=>{J=j;draw()})
+  .catch(e=>{try{console.warn('visit counts',e)}catch(x){}if(!J){box.innerHTML='<p class="vb-how">'+esc(tx('vs_err'))+'</p>';box.hidden=false}});
+ visitBox.redraw=draw;load();setInterval(()=>{if(document.visibilityState==='visible')load()},60000)}
 let STARTED=false;
 function addScoreSort(){try{const so=G('sort');if(!so||TRIAL||TIER!=='sip'||so.querySelector('option[value=score]'))return;const o=document.createElement('option');o.value='score';o.dataset.i18n='s_score';o.textContent=(typeof tx==='function'?tx('s_score'):'Highest investor score');so.insertBefore(o,so.options[1]||null)}catch(e){}}   // runs before the main block exists: TRIAL / TIER only; every plan opens on 'Complete info first' (4/11/2026), the score stays a choice for VIP
 // the member's label under the title: an agent's own code (access.json agent:1) shows Agent Specialist only, otherwise the plan
@@ -3098,7 +3145,7 @@ function agentSwitch(t){const k=AVIEW;t.className='tier-tag aview '+k;
  const s=document.createElement('select');s.id='aviewSel';s.dataset.i18nAl='aview_al';s.setAttribute('aria-label',tx('aview_al'));
  ['agent'].concat(RTIER==='sip'?['vip']:[],['prem','free']).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=TAG[v][0];o.selected=v===k;s.appendChild(o)});
  s.onchange=()=>{try{sessionStorage.setItem(KP+'aview',s.value)}catch(e){}try{gtrack('agent_view',{view:s.value})}catch(e){}location.reload()};
- t.appendChild(s);t.hidden=false;const ib=G('atInfo');if(ib){ib.hidden=false;ib.onclick=atReplay;if(k!=='agent')clInfo()}const n=G('aviewNote');n.className=k==='agent'?'agflag':'aview-note';n.dataset.i18n=k==='agent'?'aview_agent':'aview_note';n.textContent=tx(n.dataset.i18n);n.hidden=false}
+ t.appendChild(s);t.hidden=false;const ib=G('atInfo');if(ib){ib.hidden=false;ib.onclick=atReplay;if(k!=='agent')clInfo();else agentHelp()}const n=G('aviewNote');n.className=k==='agent'?'agflag':'aview-note';n.dataset.i18n=k==='agent'?'aview_agent':'aview_note';n.textContent=tx(n.dataset.i18n);n.hidden=false}
 function showTierBadge(){addScoreSort();const t=G('tierTag');if(!t)return;if(REALAGENT){agentSwitch(t);return}clInfo();if(TRIAL||!TIER){t.hidden=true;return}
  const k=ISAGENT?'agent':TIER==='sip'?'vip':'prem';t.className='tier-tag '+k;
  t.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+TAG[k][1]+'</svg><span>'+TAG[k][0]+'</span>';t.hidden=false}   // the cyberpunk "Agentic AI Powered Data" tag (#aiTag) shows on every tier, the free preview included (29/10/2026)
@@ -3291,6 +3338,9 @@ function atDone(dismissed=false){const g=AT;if(!g)return;AT=null;clearInterval(g
 // Client guide (6/11/2026): the lit walkthrough for Free, Premium and VIP, for people not used to websites. It is never required, offers itself once, and
 // has four short parts in the same order on every plan: find, understand, what to do next, what this plan gives. Only a yellow button moves it on, nothing has to be tapped on the page.
 function guideOpen(){if(REALAGENT&&AVIEW==='agent')showGuide();else clGuide()}
+// Agent Specialist view (11/11/2026): 'Need help?' next to the i button opens the agent guide; no A / A+ / A++, the normal size only
+function agentHelp(){const l=G('atInfoLbl');if(l){l.hidden=false;l.onclick=atReplay}const g=document.querySelector('.tgrp.ts');if(g)g.hidden=true;
+ if(document.documentElement.hasAttribute('data-size')){document.documentElement.removeAttribute('data-size');try{ls.set('size','')}catch(e){}}}
 function clInfo(){const b=G('atInfo'),l=G('atInfoLbl');if(!b)return;b.hidden=false;b.onclick=clGuide;b.dataset.i18nAl='c_info_al';b.setAttribute('aria-label',tx('c_info_al'));if(l){l.hidden=false;l.onclick=clGuide}}
 const clPlan=()=>TRIAL?'f':TIER==='sip'?'v':'p';
 function clDetBtn(){const x=document.querySelector('#list .card .xtra-b .score:not(.na)');return x&&x.closest('.card').querySelector('.detbtn')}
@@ -3318,7 +3368,7 @@ function clAct(k){const g=AT;if(!g.client)return false;
  if(k==='qf'||k==='text'){atDone();if(MDL)closeModal();if(k==='qf')G('qfBtn').click();else showGuide();return true}
  return false}
 function clGuide(){if(AT)return;if(MDL)closeModal();if(!document.querySelector('#list .card')){showGuide();return}gtrack('client_guide_start',{plan:clPlan()});atMount(clSteps(),0,true)}
-function start(){if(STARTED)return;STARTED=true;agentView();showTierBadge();G('count').textContent=tx('loading');loadListings().then(j=>{// Only Active units and units with a recorded result (Sold / Call Off / Unsold) are shown. A unit whose auction date has passed
+function start(){if(STARTED)return;STARTED=true;agentView();showTierBadge();visitStart();G('count').textContent=tx('loading');loadListings().then(j=>{// Only Active units and units with a recorded result (Sold / Call Off / Unsold) are shown. A unit whose auction date has passed
 // and has no result is not listed (a result usually appears within a day or two and the unit then comes back under its tab).
 // Non-LACA is the exception (4/11/2026): its data never carries a result, and it has its own tab where the bidder confirms with the agent.
 const t0=new Date();t0.setHours(0,0,0,0);
