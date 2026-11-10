@@ -2113,6 +2113,7 @@ function faType(r,a){let t=String(r[5]||'');if(!t||t==='-'||t.includes('/'))t=St
 function faDate(s){const d=new Date(dt(s));if(!dt(s))return '';const n=d.getDate(),j=n%10,k=n%100;return n+(j===1&&k!==11?'st':j===2&&k!==12?'nd':j===3&&k!==13?'rd':'th')+' '+FA_MON[d.getMonth()]+' '+d.getFullYear()}
 function faAd(r,kind){const emo=kind==='mudah',a=(ADS&&ADS.units&&ADS.units[r[SID]])||{},miss=[],tp=faType(r,a),L=[];let area=faArea(r[1]);if(!area.length||/^\d/.test(area[0])||area[0].length>60)area=[r[3],r[2]].filter(ok);   // an address with no commas, or only a street: district and state
  const p=num(r[7]),mv=suspect(r)?0:num(r[8]),good=mv>p&&p>0,pct=good?(num(r[6])||Math.round((1-p/mv)*100)):0,bull=emo?'✅ ':'- ';
+ if(emo&&/^(active|unsold)$/.test(stOf(r)))return faMudahAd(r,a,tp,p,mv,good,pct);   // 10/11/2026: Active and No bidder units use the owner's own Mudah layout; Sold keeps the old one
  if(emo){const h=faIprop(r);if(h.place)L.push('MURAH! '+h.place+(h.discount&&!h.pending?'- ✅'+h.discount+'% Discount!':''),'')}   // Mudah headline (8/11/2026, the owner's layout): project or area, town, state and the discount
  if(emo)L.push(tp.short+(area[0]?', '+area[0]:''),'');
  L.push('MURAH! '+tp.title+' @ '+area.join(', '),'');
@@ -2138,6 +2139,27 @@ function faAd(r,kind){const emo=kind==='mudah',a=(ADS&&ADS.units&&ADS.units[r[SI
  const co=ADS&&Array.isArray(ADS.contact)?ADS.contact:[];if(co.length)L.push('',...co);else miss.push('fa_m_contact');
  let text=L.join('\n');if(!emo)text=text.replace(/\p{Extended_Pictographic}️?/gu,'');
  return {text,miss,src:bed?(a.src||''):'',n:a.n||0,amen:am.length>0,osm:!!(am.length||nearby.highway)&&nearby.osm}}
+// Mudah ad for Active and No bidder units (the owner's layout, 10/11/2026, for his admin): headline, discount, address, property details, prices,
+// auction date, map pin, viewing note, then the website / Telegram block and the contact, both from the encrypted ad pack. No amenities, highway or car park.
+// Land Area only on a unit that has one (landed), right after Built Up.
+function faMudahAd(r,a,tp,p,mv,good,pct){const L=[],miss=[],h=faIprop(r);
+ if(h.place)L.push('MURAH! '+h.place+(h.discount&&!h.pending?'- ✅'+h.discount+'% Discount!':''),'');
+ if(good)L.push('Below Market Value '+pct+'%  😍','');else miss.push('fa_m_mv');
+ L.push('🏠 '+String(r[1]||''),'','PROPERTY DETAILS:','✅ '+tp.plain);
+ if(ok(r[11]))L.push('✅ Built Up: '+r[11]);
+ if(ok(r[10]))L.push('✅ Land Area: '+r[10]);
+ const bed=+a.bed||(/^\d{1,2}$/.test(r[23])?+r[23]:0),bath=+a.bath||(/^\d{1,2}$/.test(r[24])?+r[24]:0);
+ if(bed)L.push('✅ Approx. '+bed+' Bedroom'+(bed>1?'s':'')+(bath?' | '+bath+' Bathroom'+(bath>1?'s':''):''));else miss.push('fa_m_rooms');
+ if(ok(r[9]))L.push('✅ '+r[9]);
+ L.push('','🔥 Force Sale: '+r[7]+' 🔥');
+ if(good)L.push('❤️ Market Value: '+r[8],'💎 Potential Profit: RM '+Math.round(mv-p).toLocaleString('en-US'));
+ const when=faDate(r[12]);if(when)L.push('','📆 Auction Date: '+when);else miss.push('fa_m_date');
+ if(when&&isExp(r))miss.push('fa_m_past');
+ if(/^https:\/\//i.test(a.map||r[4]||''))L.push('','📍 NEARBY GOOGLE MAPS PIN:',a.map||r[4]);
+ L.push('','Kindly note the following:','+ NO INSIDE VIEWING. Self-survey from outside only','+ Cash ready: 10% Deposit | 5% legal cost | 2-5% misc');
+ const fx=ADS&&Array.isArray(ADS.first)?ADS.first:[];if(fx.length)L.push('',...fx);
+ const co=ADS&&Array.isArray(ADS.contact)?ADS.contact:[];if(co.length)L.push('',...co);else miss.push('fa_m_contact');
+ return {text:L.join('\n'),miss,src:bed?(a.src||''):'',n:a.n||0,amen:false,osm:false}}
 // Plain text for Telegram. Keep contacts in the encrypted specialist ad pack.
 function faTelegramMap(value) {
  try {
