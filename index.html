@@ -2207,7 +2207,7 @@ function faType(r,a){let t=String(r[5]||'');if(!t||t==='-'||t.includes('/'))t=St
 function faDate(s){const d=new Date(dt(s));if(!dt(s))return '';const n=d.getDate(),j=n%10,k=n%100;return n+(j===1&&k!==11?'st':j===2&&k!==12?'nd':j===3&&k!==13?'rd':'th')+' '+FA_MON[d.getMonth()]+' '+d.getFullYear()}
 function faAd(r,kind){const emo=kind==='mudah',a=(ADS&&ADS.units&&ADS.units[r[SID]])||{},miss=[],tp=faType(r,a),L=[];let area=faArea(r[1]);if(!area.length||/^\d/.test(area[0])||area[0].length>60)area=[r[3],r[2]].filter(ok);   // an address with no commas, or only a street: district and state
  const p=num(r[7]),mv=suspect(r)?0:num(r[8]),good=mv>p&&p>0,pct=good?(num(r[6])||Math.round((1-p/mv)*100)):0,bull=emo?'✅ ':'- ';
- if(emo&&/^(active|unsold)$/.test(stOf(r)))return faMudahAd(r,a,tp,p,mv,good,pct);   // 10/11/2026: Active and No bidder units use the owner's own Mudah layout; Sold keeps the old one
+ if(emo&&/^(active|unsold)$/.test(stOf(r)))return faNewTpl(r)?faTplAd(r,true):faMudahAd(r,a,tp,p,mv,good,pct);   // 11/11/2026: the owner's new Mudah template (faMudahAd kept for reference)   // 10/11/2026: Active and No bidder units use the owner's own Mudah layout; Sold keeps the old one
  if(emo){const h=faIprop(r);if(h.place)L.push('MURAH! '+h.place+(h.discount&&!h.pending?'- ✅'+h.discount+'% Discount!':''),'')}   // Mudah headline (8/11/2026, the owner's layout): project or area, town, state and the discount
  if(emo)L.push(tp.short+(area[0]?', '+area[0]:''),'');
  L.push('MURAH! '+tp.title+' @ '+area.join(', '),'');
@@ -2254,6 +2254,66 @@ function faMudahAd(r,a,tp,p,mv,good,pct){const L=[],miss=[],h=faIprop(r);
  const fx=ADS&&Array.isArray(ADS.first)?ADS.first:[];if(fx.length)L.push('',...fx);
  const co=ADS&&Array.isArray(ADS.contact)?ADS.contact:[];if(co.length)L.push('',...co);else miss.push('fa_m_contact');
  return {text:L.join('\n'),miss,src:bed?(a.src||''):'',n:a.n||0,amen:false,osm:false}}
+// 11/11/2026 (owner's templates, owner's page only): Mudah and iProperty ads for Active and No bidder units, one layout for both:
+// headline, discount, address, PROPERTY DETAILS (house type, corner / end lot / renovated from the POS, land, built-up, rooms, tenure,
+// Bumi lot / Malay reserved), prices, auction date, CONVENIENCES (3 lines: 2 amenities + 1 access, from the daily research, ad_enrich.py),
+// map pin, viewing note, contact, FIRST ACCESS. iProperty: the same text without emoji, house number hidden, the note before the map.
+const FA_CONV={shop:'🛍️',hospital:'🏥',school:'🏫',mosque:'🕌',park:'🌳',attraction:'🎡',food:'🍽️',road:'🚗',transit:'🚆',other:'📌'};
+// owner 11/11/2026: "Buat untuk admin Suhaila sahaja ... Faezah kekalkan sama macam sebelum ni": the new layout only for units the Admin Done Ads ledger gives to Suhaila
+function faNewTpl(r){let o='';try{o=DAD.owner(r)}catch(e){}return o?o==='Suhaila':!isHigh(r)}
+function faConv(r,a){
+ if(Array.isArray(a.conv)&&a.conv.length===3&&a.conv.every(x=>x&&typeof x.n==='string'&&x.n.trim()))return {items:a.conv.map(x=>({t:x.t,n:x.n.trim()})),amen:true,osm:false};
+ const nb=faNearby(r,a),items=nb.amen.filter(x=>x.t!=='transit').slice(0,2).map(x=>({t:x.t,n:x.n}));   // owner: 2 amenities and 1 highway, no rail line   // until the research reaches this area: the older amenity list
+ if(nb.highway)items.push({t:'road',n:'Easy Access to '+nb.highway.replace(/^Easy access via\s*/i,'')});
+ return {items,amen:nb.amen.length>0,osm:!!items.length&&!!nb.osm}}
+function faTplAd(r,emo){
+ const a=ADS?.units?.[r[SID]]||{},miss=[],L=[],high=isHigh(r);
+ const clean=v=>{const s=String(v??'').replace(/\s+/g,' ').trim();return /^(?:-|n\/?a|nil|null|unknown|locked2?|xx)?$/i.test(s)?'':s};
+ const address=clean(r[1]),plain=clean(faType(r,a).plain),posText=high?'':clean(r[5])+' '+plain;
+ const end=!high&&/\bend[\s-]+(?:unit|lot)\b/i.test(posText),corner=!high&&!end&&(/\bcorner\b/i.test(posText)||!!a.corner);
+ const type=plain.replace(/\(?\s*\b(?:end[\s-]+(?:unit|lot)|corner(?:[\s-]+(?:unit|lot))?)\b\s*\)?/ig,' ').replace(/\s+/g,' ').trim()||plain;
+ const sm=/^(\d(?:\.\d)?-Storey)\s*(.*)$/i.exec(type),storey=sm?sm[1]:'',word=(sm?sm[2]:type).replace(/\s+House$/i,'').trim();
+ const lotPos=corner?'Corner':end?'End Lot':'',terr=!word||/terrace|link|townhouse|teres/i.test(word);
+ const headType=high?type:([storey,lotPos&&terr?lotPos:[word,lotPos].filter(Boolean).join(' ')].filter(Boolean).join(' ')||type);   // "2-Storey Corner", "Semi-D Corner", "2-Storey Terrace"
+ const area=faArea(address).map(clean).filter(Boolean),district=clean(r[3]),state=clean(r[2]);
+ const parts=address.split(',').map(x=>x.trim()),zip=parts.findIndex(x=>/^\d{5}\b/.test(x));
+ const town=zip<0?'':parts[zip].replace(/^\d{5}\s*/,'')||parts[zip+1]||'';
+ const project=high?clean(a.tg_project)||faTelegramProject(parts,area,type,[town,district,state]):'';
+ const local=high?[project,town||district,state]:(area.length&&!/^\d/.test(area[0])&&area[0].length<=60?area:[district,state]);
+ const place=local.filter((v,i,all)=>v&&all.findIndex(x=>x.toLowerCase()===v.toLowerCase())===i).join(', ');
+ const money=v=>{const x=clean(v);return /^(?:RM\s*)?\d[\d,]*(?:\.\d{1,2})?$/i.test(x)?num(x):0};
+ const reserve=money(r[7]),rawMarket=money(r[8]),pct=reserve&&rawMarket?Math.round(100*(1-reserve/rawMarket)):0;
+ const market=!suspect(r)&&pct<90?rawMarket:0,saving=reserve&&market>reserve?market-reserve:0,discount=saving&&pct>0?pct:0,pending=stOf(r)==='unsold';
+ L.push((!pending&&discount?'MURAH! ':'')+headType+(place?' @ '+place:''));
+ if(!pending&&discount)L.push('','Below Market Value '+discount+'%'+(emo?'  😍':''));else if(!pending)miss.push('fa_m_mv');
+ if(address)L.push('',(emo?'🏠 ':'')+address);   // owner 11/11/2026: the full house number on iProperty too (Suhaila's template)
+ const D=[],fact=v=>{if(v)D.push((emo?'✅ ':'')+v)},size=v=>clean(v).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 Sq.ft');
+ fact(type);
+ if(corner)fact('Corner Lot');else if(end)fact('End Lot');
+ if(a.reno)fact('Renovated');
+ if(!high&&clean(r[10]))fact('Land Area: '+size(r[10]));
+ if(clean(r[11]))fact('Built Up: '+size(r[11]));
+ const room=v=>/^(?:[1-9]\d?)(?:\s*\+\s*\d{1,2})?$/.test(clean(v))?clean(v).replace(/\s+/g,''):'';
+ const bed=room(a.bed)||room(r[23]),bath=room(a.bath)||room(r[24]);
+ if(bed)fact('Approx. '+bed+(bed==='1'?' Bedroom':' Bedrooms')+(bath?' | '+bath+(bath==='1'?' Bathroom':' Bathrooms'):''));else miss.push('fa_m_rooms');
+ const ten=clean(r[9]);fact(ten?ten.charAt(0).toUpperCase()+ten.slice(1).toLowerCase():'');
+ const rs={'Bumi Lot':'Bumi Lot','Malay Reserve':'Malay Reserved','Native Land':'Native Land'}[a.tg_restriction]||'';fact(rs);
+ if(D.length)L.push('','PROPERTY DETAILS:',...D);
+ if(reserve)L.push('',pending?(emo?'🔥 ':'')+'Last Auction Price: '+faRm(reserve):(emo?'🔥 Force Sale: '+faRm(reserve)+' 🔥':'Force Sale: '+faRm(reserve)));else miss.push('fa_m_price');
+ if(market)L.push((emo?'❤️ ':'')+'Market Value: '+faRm(market));
+ if(saving&&!pending)L.push((emo?'💎 ':'')+'Potential Profit: '+faRm(saving));
+ const when=faDate(r[12]);
+ if(pending)L.push('',(emo?'📆 ':'')+'Auction Date: Pending next auction');
+ else if(when){L.push('',(emo?'📆 ':'')+'Auction Date: '+when);if(isExp(r))miss.push('fa_m_past')}else miss.push('fa_m_date');
+ const cv=faConv(r,a);
+ if(cv.items.length)L.push('','CONVENIENCES:',...cv.items.map(x=>emo?(FA_CONV[x.t]||FA_CONV.other)+' '+x.n:'-  '+x.n));else miss.push('fa_m_amen');
+ const map=faTelegramMap(a.map)||faTelegramMap(r[4]),mapL=map?['',(emo?'📍 ':'')+'NEARBY GOOGLE MAPS PIN:',map]:[];if(!map)miss.push('fa_m_map');
+ const note=['','Kindly note the following:','+ NO INSIDE VIEWING. Self-survey from outside only','+ Cash ready: 10% Deposit | 5% legal cost | 2-5% misc'];
+ if(emo)L.push(...mapL,...note);else L.push(...note,...mapL);
+ const co=Array.isArray(ADS?.contact)?ADS.contact.map(clean).filter(Boolean):[];if(co.length)L.push('',...co);else miss.push('fa_m_contact');
+ L.push('',(emo?'📢 ':'')+'Get FIRST ACCESS!','View our website:','https://client.lelongbidgroup.com','Join my Telegram:','https://t.me/lelongbid8');
+ let text=L.join('\n').trim();if(!emo)text=text.replace(/\p{Extended_Pictographic}️?/gu,'').replace(/[ \t]+$/gm,'');
+ return {text,miss,src:bed?(a.src||''):'',n:a.n||0,amen:cv.amen,osm:cv.osm}}
 // Plain text for Telegram. Keep contacts in the encrypted specialist ad pack.
 function faTelegramMap(value) {
  try {
@@ -2488,7 +2548,7 @@ function faOpen(r,kind){
  const titleKey = {mudah:'fa_mudah',iprop:'fa_iprop',telegram:'fa_telegram'}[kind];
  if (!titleKey) return;
  const title = tx(titleKey);
- const ad = kind==='telegram'?faTelegram(r):kind==='iprop'?faIprop(r):faAd(r,kind);
+ const ad = kind==='telegram'?faTelegram(r):kind==='iprop'?(/^(active|unsold)$/.test(stOf(r))&&faNewTpl(r)?faTplAd(r,false):faIprop(r)):faAd(r,kind);   // 11/11/2026: the owner's new iProperty template
  const src=ad.src==='pos'?tx('fa_src_pos'):ad.src==='ads'?tx('fa_src_ads').replace('{n}',ad.n):'';
  openModal(title,(ad.miss.length?'<p class="fa-note">'+esc(tx('fa_miss'))+' '+ad.miss.map(k=>esc(tx(k))).join(', ')+'</p>':'')+(src?'<p class="fa-src">'+esc(src)+'</p>':'')+(ad.amen?'<p class="fa-src">'+esc(tx('fa_amen'))+'</p>':'')+(ad.osm?'<p class="fa-src">Amenities: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors (ODbL)</a></p>':'')+'<textarea class="fa-text" readonly aria-label="'+esc(title)+'">'+esc(ad.text)+'</textarea>',
   '<button class="btn" type="button" id="faAgain">'+esc(tx('fa_again'))+'</button><button class="btn" type="button" data-close>'+esc(tx('close'))+'</button>');
