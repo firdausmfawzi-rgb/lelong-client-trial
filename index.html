@@ -312,6 +312,15 @@ html.trial #cyNote,html.trial #bmvSeg,html.trial #cyBtn,html.trial #cyPanel{disp
 .acts.v3.icons{grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px}.acts.v3.icons .calbtn{grid-column:1/-1}.acts.v3.icons .cal{width:16px;height:16px;flex:none}.acts.v3.icons a,.acts.v3.icons button{min-height:40px;font-size:.8rem;padding:3px 4px;border-radius:10px;gap:4px}.acts.v3.icons .map .pin{width:16px;height:16px}.acts.v3.icons .calbtn{text-decoration:none}
 
 .dad-history-row{padding:12px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.dad-history-row .btn{margin-top:6px;min-height:44px}#dadExpiryStatus{min-height:44px}
+/* 11/11/2026 (owner): admin remarks, and posted units in light green */
+.dad-rmk{margin:10px 0;padding:10px;border-radius:10px;background:rgba(18,102,94,.07);border:1px dashed #12665e}
+.dad-rmk-l{display:block;font-weight:800;margin-bottom:6px}.dad-rmk-t{width:100%;box-sizing:border-box;min-height:56px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;background:var(--surface);color:var(--fg);resize:vertical}
+.dad-rmk-a{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}.dad-rmk-a .btn{min-height:40px}.dad-rmk-del{color:var(--red)}.dad-rmk-s{color:var(--muted)}
+.dad-rmk-a .btn[hidden]{display:none}
+.dad-rmk-pv{display:block;font-weight:700;font-size:.85rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card[data-ads=done],.card[data-ads=part]{background:#e3f6ea}
+:root[data-theme="dark"] .card[data-ads=done],:root[data-theme="dark"] .card[data-ads=part]{background:#123222}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .card[data-ads=done],:root:not([data-theme="light"]) .card[data-ads=part]{background:#123222}}
 .dad-card{grid-column:1/-1;min-width:0;border:2px solid #12665e;border-radius:12px;background:var(--surface);color:var(--fg);overflow:hidden}
 .dad-card>summary{display:grid;grid-template-columns:1.7rem minmax(0,1fr) auto .5rem;grid-template-rows:auto auto;align-items:center;gap:3px 8px;padding:10px 12px;min-height:56px;list-style:none;cursor:pointer;color:#fff;background:#104d48;line-height:1.25;text-align:left}
 .dad-card>summary::-webkit-details-marker{display:none}
@@ -1521,7 +1530,7 @@ const isHigh=r=>r[21]===CATS[0]||r[21]===CATS[5];
 const DAD = (() => {
  const url = 'https://agent.lelongbidgroup.com/api/admin-done-ads';
  const platforms = ['iproperty','mudah'];
- const units = new Map(), labels = new Map(), logs = new Map();
+ const units = new Map(), labels = new Map(), logs = new Map(), remarks = new Map();   // remarks: owner 11/11/2026, removed only by their own button
  let aliases = new Map(), blocked = new Set(), sourceReady = true, writeRevision = 0;
  let state = 'loading', notify = null, reading = null, stamp = '', lastRequest = 0;
  const validSid = sid => /^[a-f0-9]{16}$/.test(sid);
@@ -1556,13 +1565,13 @@ const DAD = (() => {
   units.set(sid,pair);
   return true;
  }
- async function request(method, body) {
+ async function request(method, body, path) {
   if(!faOn()) throw new Error('Specialist access required');
   const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
   try {
    const headers={Authorization:'Bearer '+ACODE};
    if(body) headers['Content-Type']='application/json';
-   const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined,signal:controller.signal,
+   const res=await fetch(url+(path||''),{method,headers,body:body?JSON.stringify(body):undefined,signal:controller.signal,
                               mode:'cors',credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer'});
    if(!res.ok && res.status!==409)throw new Error('Ad posting request failed');
    const data=await res.json();
@@ -1594,6 +1603,7 @@ const DAD = (() => {
      for(const platform of platforms)if(pair[platform])update=merge(sid,platform,pair[platform],data.history?.[sid]?.[platform])||update;
     }
     for(const [sid,label] of Object.entries(data.labels||{}))if(validSid(sid))update=putLabel(sid,label)||update;
+    update=takeRemarks(data.remarks)||update;
     stamp=data.today;state='ready';
     if(update)changed();
    } catch (err) {
@@ -1629,6 +1639,21 @@ const DAD = (() => {
    if(conflict && !!units.get(target)[platform].posted!==done)throw new Error('Ad posting changed');
   } catch(err) {refresh();throw err;}
  }
+ function takeRemarks(all) {
+  if(!all||typeof all!=='object'||Array.isArray(all))return false;
+  const next=new Map(Object.entries(all).filter(([sid,v])=>validSid(sid)&&v&&typeof v.text==='string'&&v.text.trim()).map(([sid,v])=>[sid,{text:v.text,on:iso(v.on)?v.on:''}]));
+  if(JSON.stringify([...next])===JSON.stringify([...remarks]))return false;
+  remarks.clear();next.forEach((v,k)=>remarks.set(k,v));return true;
+ }
+ function remark(sid){return remarks.get(canonical(sid))||remarks.get(sid)||null}
+ async function saveRemark(sid,text){
+  if(!validSid(sid)||typeof text!=='string'||!text.trim())throw new Error('Empty remark');
+  const {data}=await request('PUT',{sid:canonical(sid),text:text.trim().slice(0,500)},'/remark');writeRevision++;takeRemarks(data.remarks);changed();
+ }
+ async function removeRemark(sid){
+  if(!validSid(sid))throw new Error('Bad unit');
+  const {data}=await request('PUT',{sid:canonical(sid),remove:true},'/remark');writeRevision++;takeRemarks(data.remarks);changed();
+ }
  function get(sid,platform) {
   const r=(units.get(canonical(sid))||{})[platform];return r && r.posted ? r : null;
  }
@@ -1653,7 +1678,7 @@ const DAD = (() => {
   }
   return rows.sort((a,b)=>(allPostings?b.posted.localeCompare(a.posted):a.expires.localeCompare(b.expires))||a.address.localeCompare(b.address));
  }
- return {owner:nameOf,status:()=>state,get,start,refresh,set,today:()=>stamp,history,postings,blocked:sid=>blocked.has(sid),sourceReady:()=>sourceReady};
+ return {owner:nameOf,status:()=>state,get,start,refresh,set,remark,saveRemark,removeRemark,today:()=>stamp,history,postings,blocked:sid=>blocked.has(sid),sourceReady:()=>sourceReady};
 })();
 
 function dadLedgerText(ms,en){return LANG==='ms'?ms:en;}
@@ -1946,6 +1971,14 @@ function dadLogItems(cycles){
   '<small>'+esc(tx(c.expires<=DAD.today()?'dad_past':'dad_until',{date:dadDate(c.expires)}))+
   (c.cleared?' · '+esc(tx('dad_cleared',{date:dadDate(c.cleared)})):'')+'</small></li>').join('');
 }
+// owner 11/11/2026: a remark box for the admins (Suhaila and Faezah) on each unit; it stays until someone presses its Remove button
+function dadRmkPreview(sid){const m=DAD.status()==='ready'&&DAD.remark(sid);return m?'\u{1F4DD} '+esc(m.text.length>60?m.text.slice(0,60)+'\u2026':m.text):''}
+function dadRmkBox(sid){const m=DAD.status()==='ready'&&DAD.remark(sid),ok=DAD.status()==='ready';
+ return '<div class="dad-rmk"><label class="dad-rmk-l">'+esc(dadLedgerText('Remarks admin','Admin remarks'))+'</label>'+
+  '<textarea class="dad-rmk-t" maxlength="500" rows="2" placeholder="'+esc(dadLedgerText('Tulis remarks di sini (contoh: tunggu gambar, harga dah semak)','Write a remark here (e.g. waiting for photos, price checked)'))+'"'+(ok?'':' disabled')+'>'+esc(m?m.text:'')+'</textarea>'+
+  '<div class="dad-rmk-a"><button type="button" class="btn dad-rmk-save"'+(ok?'':' disabled')+'>'+esc(dadLedgerText('Simpan remarks','Save remark'))+'</button>'+
+  '<button type="button" class="btn dad-rmk-del"'+(m?'':' hidden')+'>'+esc(dadLedgerText('Buang remarks','Remove remark'))+'</button>'+
+  '<small class="dad-rmk-s">'+(m&&m.on?esc(dadLedgerText('Disimpan ','Saved ')+dadDate(m.on)):'')+'</small></div></div>'}
 function dadCard(r,ended){
  const sid=r[SID],owner=DAD.owner(r);
  if(!sid||!owner)return '';
@@ -1960,8 +1993,9 @@ function dadCard(r,ended){
  const clipboard='<svg class="dad-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="8" y="2" width="8" height="5" rx="2"/><path d="m8 14 3 3 5-6"/></svg>';
  return '<details class="dad-card" data-sid="'+esc(sid)+'"'+(ended?' data-ended':'')+(ended&&!cycles.length?' hidden':'')+'><summary>'+clipboard+
   '<span class="dad-title">'+esc(tx('dad_heading'))+'</span><span class="dad-byline">'+esc(tx('dad_saved_for',{admin:owner}))+
-  '<span class="dad-last">'+(cycles.length?esc(tx('dad_last',{date:dadDate(cycles[0].posted)})):'')+'</span></span>'+
+  '<span class="dad-last">'+(cycles.length?esc(tx('dad_last',{date:dadDate(cycles[0].posted)})):'')+'</span><span class="dad-rmk-pv">'+dadRmkPreview(sid)+'</span></span>'+
   '<span class="dad-count">'+esc(dadCount(sid))+'</span></summary><div class="dad-body"><small class="dad-source"'+(DAD.sourceReady()?' hidden':'')+'>'+esc(tx('dad_source_error'))+'</small>'+rows+
+  dadRmkBox(sid)+
   '<details class="dad-log"'+(cycles.length?'':' hidden')+'><summary>'+esc(tx('dad_log'))+'</summary><ol>'+dadLogItems(cycles)+'</ol></details>'+
   '<button type="button" class="btn dad-retry"'+(DAD.status()==='error'||!DAD.sourceReady()?'':' hidden')+'>'+esc(tx('dad_retry'))+'</button></div></details>';
 }
@@ -2007,6 +2041,11 @@ function dadSync(){
   if(log.lastElementChild.innerHTML!==logHtml)log.lastElementChild.innerHTML=logHtml;
   d.querySelector('.dad-source').hidden=DAD.sourceReady();
   d.querySelector('.dad-retry').hidden=DAD.status()!=='error'&&DAD.sourceReady();
+  {const m=DAD.status()==='ready'&&DAD.remark(sid),t=d.querySelector('.dad-rmk-t'),pv=d.querySelector('.dad-rmk-pv');
+   if(pv)pv.innerHTML=dadRmkPreview(sid);
+   if(t){t.disabled=DAD.status()!=='ready';if(document.activeElement!==t&&!t.dataset.dirty)t.value=m?m.text:'';
+    d.querySelector('.dad-rmk-save').disabled=DAD.status()!=='ready';d.querySelector('.dad-rmk-del').hidden=!m;
+    d.querySelector('.dad-rmk-s').textContent=m&&m.on?dadLedgerText('Disimpan ','Saved ')+dadDate(m.on):''}}
   d.querySelectorAll('input[data-portal]').forEach(box=>{
    const portal=box.dataset.portal,rec=ready&&!DAD.blocked(sid)&&DAD.get(sid,portal);
    box.checked=!!rec;
@@ -2825,6 +2864,14 @@ $('dadRetry').onclick=dadRefresh;
 $('dadLedger').onclick=()=>dadOpenLedger($('dadOwner').value);
 $('emptyMsg').addEventListener('click',e=>{if(e.target.closest('.dad-retry'))dadRefresh()});
 $('list').addEventListener('click',e=>{if(e.target.closest('.dad-retry'))dadRefresh()});
+$('list').addEventListener('input',e=>{const t=e.target.closest('.dad-rmk-t');if(t)t.dataset.dirty='1'});
+$('list').addEventListener('click',async e=>{const b=e.target.closest('.dad-rmk-save,.dad-rmk-del');if(!b)return;const d=b.closest('.dad-card'),sid=d&&d.dataset.sid;if(!sid)return;
+ const t=d.querySelector('.dad-rmk-t'),st=d.querySelector('.dad-rmk-s');
+ if(b.classList.contains('dad-rmk-del')&&!confirm(dadLedgerText('Buang remarks ini? Ia tidak boleh dikembalikan.','Remove this remark? It cannot be brought back.')))return;
+ if(b.classList.contains('dad-rmk-save')&&!t.value.trim()){st.textContent=dadLedgerText('Remarks kosong tidak disimpan. Guna Buang remarks untuk memadam.','An empty remark is not saved. Use Remove remark to delete it.');return}
+ b.disabled=true;st.textContent=dadLedgerText('Menyimpan\u2026','Saving\u2026');
+ try{if(b.classList.contains('dad-rmk-del'))await DAD.removeRemark(sid);else await DAD.saveRemark(sid,t.value);delete t.dataset.dirty;dadSync()}
+ catch(err){st.textContent=dadLedgerText('Tidak dapat disimpan. Cuba lagi.','Could not save. Please try again.')}finally{b.disabled=false}});
 $('list').addEventListener('change',async e=>{
  const box=e.target.closest('.dad-card input[data-portal]');
  if(!box||!faOn())return;
