@@ -402,6 +402,18 @@ html.trial #cyNote,html.trial #bmvSeg,html.trial #cyBtn,html.trial #cyPanel{disp
 .info-bar button,.info-bar a{display:inline-flex;align-items:center;min-height:46px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:10px;padding:0 14px;font-weight:700;text-decoration:none}
 .info-bar a.wa{background:var(--wa);border-color:var(--wa);color:var(--wa-fg)}
 .card.hl{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+/* 11/11/2026: the listing the client last tapped glows, so after another tab they know where they were; one at a time */
+.card.picked{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold),0 0 22px 6px rgba(217,181,74,.55);animation:pickGlow 2.4s ease-in-out infinite}
+@keyframes pickGlow{0%,100%{box-shadow:0 0 0 3px var(--gold),0 0 16px 3px rgba(217,181,74,.45)}50%{box-shadow:0 0 0 3px var(--gold),0 0 30px 10px rgba(217,181,74,.75)}}
+/* 11/11/2026 (owner's page, For Admin only): a unit whose ads an admin has posted says so at the top of its card */
+.ads-flag{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;font-weight:800;font-size:.86rem;letter-spacing:.03em;line-height:1.25}
+.ads-flag .af-i{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:.8rem}
+.ads-flag small{font-weight:600;letter-spacing:0;opacity:.9}
+.card[data-ads=done]{border:2px solid #1f8a6b}.ads-flag.done{background:#134e48;color:#e6fff5}.ads-flag.done .af-i{background:#38d39f;color:#06302a}
+.card[data-ads=part]{border:2px solid var(--warn)}.ads-flag.part{background:var(--warn-bg);color:var(--warn)}.ads-flag.part .af-i{background:var(--warn);color:var(--warn-bg)}
+.card[data-ads=exp]{border:2px solid var(--red)}.ads-flag.exp{background:var(--red-bg);color:var(--red)}.ads-flag.exp .af-i{background:var(--red);color:var(--red-bg)}
+@media print{.ads-flag{display:none}}
+@media print{.card.picked{box-shadow:none;animation:none;border-color:var(--line)}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;z-index:45;font-weight:700;font-size:1rem;max-width:calc(100% - 32px);text-align:center}
 .acts a,.acts button{text-align:center;white-space:normal;line-height:1.2;padding:6px 8px;text-decoration:none;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;min-height:52px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:1rem}
 .acts a.map .pin{width:22px;height:22px;flex:0 0 auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
@@ -1920,6 +1932,18 @@ function dadCard(r,ended){
   '<details class="dad-log"'+(cycles.length?'':' hidden')+'><summary>'+esc(tx('dad_log'))+'</summary><ol>'+dadLogItems(cycles)+'</ol></details>'+
   '<button type="button" class="btn dad-retry"'+(DAD.status()==='error'||!DAD.sourceReady()?'':' hidden')+'>'+esc(tx('dad_retry'))+'</button></div></details>';
 }
+// the ads state of a unit for its card: done = every portal posted and not expired; part = some; exp = posted before, all expired now
+function adsState(sid){
+ if(!faOn()||!sid||DAD.status()!=='ready'||!DAD.sourceReady()||DAD.blocked(sid))return null;
+ const nm=p=>p==='mudah'?'Mudah':'iProperty',recs=dadPortals.map(p=>[p,DAD.get(sid,p)]).filter(x=>x[1]),live=recs.filter(x=>x[1].expires>DAD.today());
+ if(live.length===dadPortals.length)return {st:'done',i:'✓',t:dadLedgerText('IKLAN SIAP','ADS DONE'),d:live.map(x=>nm(x[0])).join(' + ')};
+ if(live.length)return {st:'part',i:live.length+'/'+dadPortals.length,t:dadLedgerText('IKLAN SEPARUH SIAP','ADS PARTLY DONE'),d:live.map(x=>nm(x[0])).join(' + ')+dadLedgerText(' sahaja',' only')};
+ if(recs.length)return {st:'exp',i:'!',t:dadLedgerText('IKLAN TAMAT, POST SEMULA','ADS EXPIRED, REPOST'),d:''};
+ return null}
+function adsFlagInner(a){return '<span class="af-i">'+esc(a.i)+'</span><span>'+esc(a.t)+(a.d?' <small>· '+esc(a.d)+'</small>':'')+'</span>'}
+function adsFlagHtml(sid){const a=adsState(sid);return a?'<div class="ads-flag '+a.st+'">'+adsFlagInner(a)+'</div>':''}
+function adsFlagSet(c){if(!c)return;const a=adsState(c.dataset.id&&(DATA.find(x=>x[20]===c.dataset.id)||[])[SID]);let f=c.querySelector(':scope>.ads-flag');
+ if(!a){c.removeAttribute('data-ads');if(f)f.remove();return}c.dataset.ads=a.st;if(!f){f=document.createElement('div');c.prepend(f)}f.className='ads-flag '+a.st;const h=adsFlagInner(a);if(f.innerHTML!==h)f.innerHTML=h}
 function dadSync(){
  if(!faOn())return;
  const statusChanged=dadLastStatus!==DAD.status();
@@ -1937,6 +1961,7 @@ function dadSync(){
    $('list').querySelectorAll('.dad-card').forEach(d=>{d.open=openCards.has(d.dataset.sid)});
   }
  }
+ $('list').querySelectorAll(':scope > .card[data-id]').forEach(adsFlagSet);
  $('list').querySelectorAll('.dad-card').forEach(d=>{
   const sid=d.dataset.sid,ready=DAD.status()==='ready'&&DAD.sourceReady(),ended=d.hasAttribute('data-ended');
   const cycles=ready&&!DAD.blocked(sid)?DAD.postings(sid):[];
@@ -2477,6 +2502,12 @@ function posCard(r){if(ISAGENT&&ACODE&&!TRIAL)return '<button type="button" clas
  return '<a class="posreq" href="'+esc(waPos(r))+'" target="_blank" rel="noopener">'+PDFI+'<span>'+tx('pos_short')+'</span></a>'}
 function favBtn(r,fav){return '<button type="button" class="fav" data-id="'+esc(r[20])+'" aria-pressed="'+fav+'">'+tx(fav?'saved':'save')+'</button>'}
 function shareBtn(r){return TRIAL?'':'<button type="button" class="sh" data-id="'+esc(r[20])+'" aria-label="'+esc(tx('share'))+'">'+tx('share')+'</button>'}
+let PICKED=null;   // id of the listing last tapped (kept per page in this browser)
+function pickedId(){if(PICKED===null){try{PICKED=localStorage.getItem(KP+'picked')||''}catch(e){PICKED=''}}return PICKED}
+function pickCard(c){const id=c.dataset.id;if(!id||!faOn())return;   // owner: Agent Specialist view of the owner's page only
+ if(id===pickedId()&&c.classList.contains('picked'))return;PICKED=id;
+ document.querySelectorAll('#list .card.picked').forEach(x=>{if(x!==c)x.classList.remove('picked')});c.classList.add('picked');try{localStorage.setItem(KP+'picked',id)}catch(e){}}
+document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('#list .card.v2[data-id]');if(c)pickCard(c)},true);
 function card(r,i){
  const st=stOf(r),end=st!=='active'&&st!=='unsold',ex=end&&!soldOpen(st),simple=VIEW==='simple'&&!PRINTING;
  // fire only for a real discount: not shown for 0-9% below market value (or for ended units)
@@ -2485,7 +2516,8 @@ function card(r,i){
  const cal=!ex&&dt(r[12])>=T0?calUrl(r):'';
  let hz=hero(r);if(i<2)hz=hz.replace('loading="lazy"','loading="eager" fetchpriority="high"');   // the first photos are what the client sees first
  const onPhoto=!!(hz&&bt&&!ex);
- return '<article class="card v2'+(ex?' expired':'')+(simple?' simple':'')+(sharedId?' hl':'')+'" data-k="'+i+'" data-id="'+esc(r[20])+'">'+hz+(end?'<div class="exp-tag '+st+'">'+tagText(r,st)+'</div>':'')
+ const adsFl=adsFlagHtml(r[SID]),adsSt=adsFl?adsFl.split('"')[1].split(' ')[1]:'';
+ return '<article class="card v2'+(ex?' expired':'')+(simple?' simple':'')+(sharedId?' hl':'')+(r[20]&&r[20]===pickedId()&&faOn()?' picked':'')+'" data-k="'+i+'" data-id="'+esc(r[20])+'"'+(adsSt?' data-ads="'+adsSt+'"':'')+'>'+adsFl+hz+(end?'<div class="exp-tag '+st+'">'+tagText(r,st)+'</div>':'')
  +kindLine(r,cn)
  +'<div class="head"><span class="num">'+(i+1)+'</span><div class="addr">'+hlAddr(r[1])+'</div>'+(TRIAL?'':'<button type="button" class="cpy" data-id="'+esc(r[20])+'" aria-label="'+esc(tx('copy_al'))+'" title="'+esc(tx('copy_al'))+'">'+CPY+'</button>')+'</div>'
  +railWalkNote(r)+priceBox(r,ex,fire,bt,onPhoto)
