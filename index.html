@@ -3450,19 +3450,22 @@ const AP_URL='https://agent.lelongbidgroup.com/portal';
 const AP_TXT={en:{help:'Need help?',sub:'Agents only',k:'AGENT PORTAL GUIDE',next:'Next',back:'Back',done:'Got it',open:'Open portal',
  s:[['Your own Agent Portal button','Only agents see this button. VIP, Premium and Free clients never see it.'],
     ['What is in the portal','Ask for access codes for your clients, see your clients and their plans, and set Client match so new units that suit a client are found for you.'],
-    ['How to get in','Press this button. The first time, open the login link we sent to your WhatsApp. After that you go straight in.']]},
+    ['How to get in','Press this button. It signs you in with your own agent code, so you do not need to type anything.']]},
  ms:{help:'Perlu bantuan?',sub:'Ejen sahaja',k:'PANDUAN PORTAL EJEN',next:'Seterusnya',back:'Kembali',done:'Faham',open:'Buka portal',
  s:[['Butang Portal Ejen anda','Hanya ejen nampak butang ini. Klien VIP, Premium dan Free tidak nampak.'],
     ['Apa ada di portal','Minta kod akses untuk klien anda, lihat klien dan pelan mereka, dan pasang Client match supaya unit baru yang sesuai dengan klien dicarikan untuk anda.'],
-    ['Cara masuk','Tekan butang ini. Kali pertama, buka pautan log masuk yang kami hantar ke WhatsApp anda. Selepas itu anda terus masuk.']]}};
+    ['Cara masuk','Tekan butang ini. Ia terus log masuk dengan kod ejen anda sendiri, jadi anda tidak perlu taip apa-apa.']]}};
 const apT=()=>AP_TXT[LANG]||AP_TXT.en;
 function apI18n(){const b=G('apBtn'),h=G('apHelp');if(b)b.querySelector('small').textContent=apT().sub;if(h)h.textContent=apT().help}
 function apInit(){if(!faOn()){const w=G('apWrap');if(w)w.remove();return}
  if(!G('apWrap')){const acts=document.querySelector('.hd .hd-acts');if(!acts)return;const w=document.createElement('div');w.className='ap-wrap';w.id='apWrap';
   w.innerHTML='<a class="ap-btn" id="apBtn" href="'+AP_URL+'" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 9l3 2-3 2M12 13h4"/></svg><span class="ap-t">Agent Portal<small></small></span><i class="ap-dot" aria-hidden="true"></i></a><button type="button" class="ap-help" id="apHelp"></button>';
-  acts.appendChild(w);G('apHelp').onclick=()=>apTour(true);G('apBtn').addEventListener('click',()=>gtrack('agent_portal_open',{}))}
+  acts.appendChild(w);G('apHelp').onclick=()=>apTour(true);G('apBtn').addEventListener('click',e=>{e.preventDefault();gtrack('agent_portal_open',{});apGo()})}
  apI18n();
  if(ls.get('aptour_'+ACODE)!=='done')setTimeout(()=>{if(!AT&&!agTourDue()&&!G('apTour')&&faOn())apTour(false)},1500)}   // first time: after the main agent guide, never on top of it
+function apGo(){if(!ACODE){window.open(AP_URL,'_blank','noopener');return}   // signed in at once with the agent's own code (portal /a/kod)
+ const f=document.createElement('form');f.method='POST';f.action='https://agent.lelongbidgroup.com/a/kod';f.target='_blank';
+ const i=document.createElement('input');i.type='hidden';i.name='c';i.value=ACODE;f.appendChild(i);document.body.appendChild(f);f.submit();f.remove()}
 function apTour(again){const b=G('apBtn');if(!b||G('apTour'))return;let i=0;const n=apT().s.length;gtrack(again?'agent_portal_help':'agent_portal_tour',{});
  window.scrollTo({top:0,behavior:'auto'});const w=document.createElement('div');w.id='apTour';w.innerHTML='<div class="ap-dim"></div><div class="ap-ring"></div><div class="ap-card" role="dialog" aria-modal="true" aria-live="polite"></div>';document.body.appendChild(w);
  const onKey=e=>{if(e.key==='Escape')close()};
@@ -3472,7 +3475,7 @@ function apTour(again){const b=G('apBtn');if(!b||G('apTour'))return;let i=0;cons
   c.innerHTML='<div class="ap-k">'+esc(t.k)+' \u00b7 '+(i+1)+'/'+n+'</div><h3>'+esc(st[0])+'</h3><p>'+esc(st[1])+'</p><div class="ap-nav">'+(i?'<button type="button" data-a="b">'+esc(t.back)+'</button>':'<button type="button" data-a="x" aria-label="Close">\u2715</button>')+
    (i<n-1?'<button type="button" class="ap-go" data-a="n">'+esc(t.next)+'</button>':'<button type="button" data-a="x">'+esc(t.done)+'</button><a class="ap-go" href="'+AP_URL+'" target="_blank" rel="noopener" data-a="o">'+esc(t.open)+'</a>')+'</div>';
   place();(c.querySelector('.ap-go')||c.querySelector('button')).focus()}
- w.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a){if(e.target.classList.contains('ap-dim'))close();return}const k=a.dataset.a;if(k==='n'){i++;draw()}else if(k==='b'){i--;draw()}else if(k==='x'||k==='o')close()});
+ w.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a){if(e.target.classList.contains('ap-dim'))close();return}const k=a.dataset.a;if(k==='n'){i++;draw()}else if(k==='b'){i--;draw()}else if(k==='x')close();else if(k==='o'){e.preventDefault();close();apGo()}});
  document.addEventListener('keydown',onKey);window.addEventListener('resize',place);draw()}
 function agentHelp(){const l=G('atInfoLbl');if(l){l.hidden=false;l.onclick=atReplay}const g=document.querySelector('.tgrp.ts');if(g)g.hidden=true;
  if(document.documentElement.hasAttribute('data-size')){document.documentElement.removeAttribute('data-size');try{ls.set('size','')}catch(e){}}}
