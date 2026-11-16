@@ -905,7 +905,7 @@ button.stat:hover,button.stat:focus-visible{border-color:var(--neon);box-shadow:
 <h2>Hartanah lelong bank dan mahkamah di Malaysia</h2>
 <p>Lelong Bid Group (lelongbidgroup.com) ialah senarai hartanah lelong dari seluruh Malaysia, disusun oleh Firdaus Jay. Ia meliputi lelong bank (LACA) serta lelong Mahkamah Tinggi dan Pejabat Tanah (Non-LACA). Senarai menunjukkan jenis hartanah, kawasan, harga rizab, tarikh lelong dan, jika ada, nilai pasaran. Ia dikemas kini dua kali sehari daripada notis lelong awam.</p>
 <p>Cari rumah lelong mengikut negeri, jenis hartanah dan harga: rumah teres, apartmen, kondominium, kedai dan tanah, dari Selangor, Kuala Lumpur dan Johor hingga Sabah dan Sarawak. Pratonton percuma menunjukkan harga rizab dan tarikh lelong. Butiran penuh dibuka untuk ahli Premium.</p>
-<p>Baru pertama kali? Baca <a href="https://proses.lelongbidgroup.com/">panduan proses beli rumah lelong, A hingga Z</a>.</p>
+<p>Lihat <a href="https://lelongbidgroup.com/lelong/">rumah lelong mengikut negeri dan daerah</a>. Baru pertama kali? Baca <a href="https://proses.lelongbidgroup.com/">panduan proses beli rumah lelong, A hingga Z</a>.</p>
 <h2>Tentang Firdaus Jay</h2>
 <p>Firdaus Jay, nama penuh Firdaus Bin Mohamad Fawzi (juga ditulis Firdaus Mohamad Fawzi), ialah ejen hartanah lelong di Malaysia. Telefon atau WhatsApp 019-6522361. <a href="https://lelongbidgroup.com/firdaus-jay/">Profil Firdaus Jay</a></p>
 </div>
@@ -914,7 +914,7 @@ button.stat:hover,button.stat:focus-visible{border-color:var(--neon);box-shadow:
 <h2>Bank and court auction property in Malaysia</h2>
 <p>Lelong Bid Group (lelongbidgroup.com) is a list of auction (lelong) properties from all over Malaysia, put together by Firdaus Jay. It covers bank auctions (LACA) as well as High Court and Land Office auctions (Non-LACA). The list shows the property type, area, reserve price, auction date and, where available, the market value. It is updated twice a day from public auction notices.</p>
 <p>Search auction property by state, property type and price: terrace houses, apartments, condominiums, shops and land, from Selangor, Kuala Lumpur and Johor to Sabah and Sarawak. The free preview shows reserve prices and auction dates. Full details open for Premium members.</p>
-<p>First time? Read the <a href="https://proses.lelongbidgroup.com/en/">A to Z guide to buying an auction property</a>.</p>
+<p>Browse <a href="https://lelongbidgroup.com/lelong/">auction property by state and district</a>. First time? Read the <a href="https://proses.lelongbidgroup.com/en/">A to Z guide to buying an auction property</a>.</p>
 <h2>About Firdaus Jay</h2>
 <p>Firdaus Jay, full name Firdaus Bin Mohamad Fawzi (also written Firdaus Mohamad Fawzi), is an auction property agent in Malaysia. Call or WhatsApp 019-6522361. <a href="https://lelongbidgroup.com/firdaus-jay/">Firdaus Jay's profile</a></p>
 </div>
@@ -1206,8 +1206,9 @@ function kiraView(){var K=KIRA,ms=(K.l||'')==='ms',p=Math.round(+K.p),mv=Math.ro
  setW(w);try{gtag('event','kira_open',{price:p})}catch(e){}}
 </script>
 <script>
-const FIELDS=["no", "address", "state", "district", "maps", "type", "bmv", "price", "market_value", "tenure", "land", "built_up", "auction_date", "auction_time", "auction_count", "restrictions", "bank", "laca","category","completion_year","id","_cat","first_seen","bedroom","bathroom","carpark","outcome","sold_price","kind","history","borrower","rental","photo","rental_ads","sid","pin","nb_unproven"];   // pin (2/11/2026): an exact Google pin is known (data2 flag; paid rows: query_place_id in the maps link)
+const FIELDS=["no", "address", "state", "district", "maps", "type", "bmv", "price", "market_value", "tenure", "land", "built_up", "auction_date", "auction_time", "auction_count", "restrictions", "bank", "laca","category","completion_year","id","_cat","first_seen","bedroom","bathroom","carpark","outcome","sold_price","kind","history","borrower","rental","photo","rental_ads","sid","pin","nb_unproven","was"];   // pin (2/11/2026): an exact Google pin is known (data2 flag; paid rows: query_place_id in the maps link)
 const NBU=FIELDS.indexOf('nb_unproven');   // 4/11/2026: a No bidder with no BidNow page behind it: labelled 'not confirmed'
+const WAS=FIELDS.indexOf('was');   // 16/11/2026: the ids a card had before it was joined into one (old shared links, saved units)
 const SID=FIELDS.indexOf('sid');   // share id (30/10/2026): a shared link carries this keyed hash, never the real id (the full address)
 const G=id=>document.getElementById(id);const gtrack=(n,p)=>{try{if(window.gtag)gtag('event',n,p||{})}catch(e){}};
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -1513,7 +1514,7 @@ const selT=new Set();   // Auction Date: any number of dates can be ticked at on
 const selY=new Set();   // Completion Year (only offered under Condominium / Apartment / SOHO): any number of years
 let bmv=0,laca='',railOnly=false,status='available';   // 'available' = Active + Unsold (shown as "No bidder"): what a client's search shows by default
 let sharedId=(location.hash||'').slice(1)||null;   // a shared link's unit: its share id (sid), or the real id in links made before 30/10/2026
-if(sharedId){const m=DATA.find(r=>r[20]===sharedId||r[SID]===sharedId);sharedId=m?m[20]:null}
+if(sharedId){const m=DATA.find(r=>r[20]===sharedId||r[SID]===sharedId)||DATA.find(r=>(r[WAS]||[]).includes(sharedId));sharedId=m?m[20]:null}
 const track=gtrack;
 const BASE=location.origin+location.pathname;
 const agentLink=r=>(TRIAL&&KP==='client.')?'https://lelongbidgroup.com/#'+r[20]:BASE+'#'+r[20];   // 9/11/2026: a WhatsApp message to the owner from his free preview links to his OWN page, which opens that unit in his agent view (his stored code), and shows the free preview of the unit to anyone else
@@ -2301,6 +2302,8 @@ function daerahOpts(){const n=$('negeri').value;
 // Saved units ("My list"): kept on this device; units that leave the list (sold long ago, removed) simply stop showing.
 const FAV=new Set();try{const a=JSON.parse(ls.get('fav')||'[]');if(Array.isArray(a))a.forEach(x=>{if(typeof x==='string')FAV.add(x)})}catch(e){}
 const saveFav=()=>{while(FAV.size>300)FAV.delete(FAV.values().next().value);ls.set('fav',JSON.stringify([...FAV]))};
+// a saved unit that was joined into another card (one unit, one card) follows it to that card (16/11/2026)
+(()=>{const have=new Set(DATA.map(r=>r[20]));let ch=false;[...FAV].forEach(id=>{if(have.has(id))return;const m=DATA.find(r=>(r[WAS]||[]).includes(id));if(m){FAV.delete(id);FAV.add(m[20]);ch=true}});if(ch)saveFav()})();
 let favMode=false,PRINTING=false,LASTON=false,LASTSNAP=null;
 let VIEW='detailed';   // 2/11/2026: the Simple view is retired; the toggle stays hidden and every list is detailed
 function filtered(skip){
