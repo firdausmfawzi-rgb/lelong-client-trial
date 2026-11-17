@@ -472,6 +472,13 @@ html.trial #cyNote,html.trial #bmvSeg,html.trial #cyBtn,html.trial #cyPanel{disp
 :root[data-theme="dark"] .card[data-ads=done],:root[data-theme="dark"] .card[data-ads=part]{background:#1b5534}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .card[data-ads=done],:root:not([data-theme="light"]) .card[data-ads=part]{background:#1b5534}}
 .card[data-ads=part]{border:2px solid var(--warn)}.ads-flag.part{background:var(--warn-bg);color:var(--warn)}.ads-flag.part .af-i{background:var(--warn);color:var(--warn-bg)}
+.card[data-ads=relist]{border:4px solid #f59e0b!important;box-shadow:0 0 0 4px rgba(251,191,36,.7),0 0 30px rgba(251,191,36,.85);animation:relistGlow 1.6s ease-in-out infinite}
+.ads-flag.relist{background:#7c2d12;color:#fff7ed;font-size:1rem;padding:12px 14px}.ads-flag.relist .af-i{background:#fbbf24;color:#451a03}
+@keyframes relistGlow{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.45),0 0 16px rgba(245,158,11,.5)}50%{box-shadow:0 0 0 7px rgba(251,191,36,.85),0 0 44px rgba(251,191,36,.95)}}
+.dad-card.relist{border-color:#f59e0b;box-shadow:0 0 0 4px rgba(251,191,36,.7),0 0 26px rgba(251,191,36,.8);animation:relistGlow 1.6s ease-in-out infinite}
+.dad-rp:empty{display:none}.dad-rp{margin:0 0 10px}.dad-relist{background:#fff7ed;color:#7c2d12;border:2px solid #f59e0b;border-radius:10px;padding:10px 12px;font-weight:700;line-height:1.4}
+.dad-repost{margin-top:8px;min-height:44px;background:#f59e0b!important;color:#1c1003!important;border-color:#d97706!important;font-weight:800}
+.dad-reposted{display:block;font-weight:700;color:#16a34a}
 .card[data-ads=exp]{border:2px solid var(--red)}.ads-flag.exp{background:var(--red-bg);color:var(--red)}.ads-flag.exp .af-i{background:var(--red);color:var(--red-bg)}
 @media print{.ads-flag{display:none}}
 @media print{.card.picked{box-shadow:none;animation:none;border-color:var(--line)}}
@@ -1153,7 +1160,7 @@ button.stat:hover,button.stat:focus-visible{border-color:var(--neon);box-shadow:
 <label for="dadOwner">Admin Done Ads</label>
 <select id="dadOwner"><option value="" data-i18n="dad_all_owners">All admins</option><option>Faezah</option><option>Suhaila</option></select>
 <label for="dadState" data-i18n="dad_state">Posting status</label>
-<select id="dadState"><option value="" data-i18n="dad_all">All statuses</option><option value="posted" data-i18n="dad_posted">Posted on at least one portal</option><option value="pending" data-i18n="dad_pending">Still to post on at least one portal</option><option value="expired" data-i18n="dad_expired">Expired on at least one portal</option></select>
+<select id="dadState"><option value="" data-i18n="dad_all">All statuses</option><option value="posted" data-i18n="dad_posted">Posted on at least one portal</option><option value="pending" data-i18n="dad_pending">Still to post on at least one portal</option><option value="expired" data-i18n="dad_expired">Expired on at least one portal</option><option value="relist" data-i18n="dad_relist">Back at auction: repost the ads</option><option value="reposted" data-i18n="dad_reposted_f">Done Reposted</option></select>
 <small id="dadFilterNote" role="status"></small><button id="dadRetry" type="button" class="btn" data-i18n="dad_retry" hidden>Retry</button>
 <button id="dadLedger" type="button" class="btn" data-i18n="dad_ledger">Ad expiry dates</button>
 </div>
@@ -1294,7 +1301,7 @@ dad_state:"Posting status",
 dad_all:"All statuses",
 dad_posted:"Posted on at least one portal",
 dad_pending:"Still to post on at least one portal",
-dad_expired:"Expired on at least one portal",
+dad_expired:"Expired on at least one portal",dad_relist:"Back at auction: repost the ads",dad_reposted_f:"Done Reposted",
 dad_tick:"Tick when posted · {days} days",
 dad_date:"Posted {date}",
 dad_until:"Expires {date}",
@@ -1389,7 +1396,7 @@ dad_state:"Status iklan",
 dad_all:"Semua status",
 dad_posted:"Dah iklan di sekurang-kurangnya satu portal",
 dad_pending:"Belum iklan di sekurang-kurangnya satu portal",
-dad_expired:"Luput di sekurang-kurangnya satu portal",
+dad_expired:"Luput di sekurang-kurangnya satu portal",dad_relist:"Masuk lelong semula: post semula iklan",dad_reposted_f:"Sudah Done Reposted",
 dad_tick:"Tanda bila dah iklan · {days} hari",
 dad_date:"Diiklankan {date}",
 dad_until:"Luput {date}",
@@ -1739,7 +1746,8 @@ const isHigh=r=>r[21]===CATS[0]||r[21]===CATS[5];
 const DAD = (() => {
  const url = 'https://agent.lelongbidgroup.com/api/admin-done-ads';
  const platforms = ['iproperty','mudah'];
- const units = new Map(), labels = new Map(), logs = new Map(), remarks = new Map();   // remarks: owner 11/11/2026, removed only by their own button
+ const units = new Map(), labels = new Map(), logs = new Map(), remarks = new Map();
+ const relist = new Map(), reposted = new Map();   // owner 17/11/2026: units back at auction after their ads were done; the Done Reposted ticks   // remarks: owner 11/11/2026, removed only by their own button
  let aliases = new Map(), blocked = new Set(), sourceReady = true, writeRevision = 0;
  let state = 'loading', notify = null, reading = null, stamp = '', lastRequest = 0;
  const validSid = sid => /^[a-f0-9]{16}$/.test(sid);
@@ -1813,6 +1821,7 @@ const DAD = (() => {
     }
     for(const [sid,label] of Object.entries(data.labels||{}))if(validSid(sid))update=putLabel(sid,label)||update;
     update=takeRemarks(data.remarks)||update;
+    update=takeRelist(data)||update;
     stamp=data.today;state='ready';
     if(update)changed();
    } catch (err) {
@@ -1845,6 +1854,7 @@ const DAD = (() => {
    putLabel(target,data.label);stamp=data.today;
    writeRevision++;
    changed();
+   refresh();   // a new posting may answer a unit that came back to auction
    if(conflict && !!units.get(target)[platform].posted!==done)throw new Error('Ad posting changed');
   } catch(err) {refresh();throw err;}
  }
@@ -1853,6 +1863,25 @@ const DAD = (() => {
   const next=new Map(Object.entries(all).filter(([sid,v])=>validSid(sid)&&v&&typeof v.text==='string'&&v.text.trim()).map(([sid,v])=>[sid,{text:v.text,on:iso(v.on)?v.on:''}]));
   if(JSON.stringify([...next])===JSON.stringify([...remarks]))return false;
   remarks.clear();next.forEach((v,k)=>remarks.set(k,v));return true;
+ }
+ function takeRelist(data) {
+  if(!data||typeof data.relist!=='object'||!data.relist||Array.isArray(data.relist))return false;
+  const nextR=new Map(Object.entries(data.relist).filter(([sid,v])=>validSid(sid)&&v&&iso(v.round)&&iso(v.prev)).map(([sid,v])=>[sid,{round:v.round,prev:v.prev}]));
+  const nextP=new Map(Object.entries(data.reposts&&typeof data.reposts==='object'?data.reposts:{}).filter(([sid,v])=>validSid(sid)&&Array.isArray(v))
+    .map(([sid,v])=>[sid,v.filter(x=>x&&iso(x.round)&&iso(x.on)).map(x=>({round:x.round,on:x.on}))]));
+  if(JSON.stringify([...nextR])===JSON.stringify([...relist])&&JSON.stringify([...nextP])===JSON.stringify([...reposted]))return false;
+  relist.clear();nextR.forEach((v,k)=>relist.set(k,v));reposted.clear();nextP.forEach((v,k)=>reposted.set(k,v));return true;
+ }
+ function relistOf(sid){return relist.get(canonical(sid))||null}
+ function repostsOf(sid){return reposted.get(canonical(sid))||[]}
+ async function repost(sid){
+  const rl=relistOf(sid);
+  if(state!=='ready'||!sourceReady||blocked.has(sid)||!validSid(sid)||!rl)throw new Error('Repost unavailable');
+  try{
+   const {data,conflict}=await request('PUT',{sid,round:rl.round},'/repost');
+   writeRevision++;takeRelist(data);if(iso(data.today))stamp=data.today;changed();
+   if(conflict)throw new Error('Auction date changed');
+  }catch(err){refresh();throw err}
  }
  function remark(sid){return remarks.get(canonical(sid))||remarks.get(sid)||null}
  async function saveRemark(sid,text){
@@ -1873,7 +1902,8 @@ const DAD = (() => {
    if(cycles?.length)return cycles;
    const rec=get(id,platform);
    return rec?[{platform,posted:rec.posted,expires:rec.expires,cleared:null}]:[];
-  }).sort((a,b)=>b.posted.localeCompare(a.posted));
+  }).concat((reposted.get(id)||[]).map(x=>({platform:'repost',posted:x.on,round:x.round,expires:'',cleared:null})))
+   .sort((a,b)=>b.posted.localeCompare(a.posted));
  }
  function history(owner,allPostings=false) {
   const rows=[];
@@ -1887,7 +1917,8 @@ const DAD = (() => {
   }
   return rows.sort((a,b)=>(allPostings?b.posted.localeCompare(a.posted):a.expires.localeCompare(b.expires))||a.address.localeCompare(b.address));
  }
- return {owner:nameOf,status:()=>state,get,start,refresh,set,remark,saveRemark,removeRemark,today:()=>stamp,history,postings,blocked:sid=>blocked.has(sid),sourceReady:()=>sourceReady};
+ return {owner:nameOf,status:()=>state,get,start,refresh,set,remark,saveRemark,removeRemark,today:()=>stamp,history,postings,blocked:sid=>blocked.has(sid),sourceReady:()=>sourceReady,
+  relist:relistOf,reposts:repostsOf,repost};
 })();
 
 function dadLedgerText(ms,en){return LANG==='ms'?ms:en;}
@@ -1907,6 +1938,8 @@ function dadRefreshLedger(){
  const count=Number(target.dataset.limit)||50, pending=target.dataset.saving;
  const clears=dadLedgerText('Nyah tanda','Uncheck');
  target.innerHTML=selected.slice(0,count).map(r=>{
+  if(r.platform==='repost')return '<div class="dad-history-row"><b>'+esc(r.address)+'</b><div>'+esc(r.owner)+' · Done Reposted</div><div>'+
+   esc(dadLedgerText('Repost ','Reposted '))+esc(dadLedgerDate(r.posted))+' · <strong>'+esc(dadLedgerText('Lelongan ','Auction '))+esc(dadLedgerDate(r.round))+'</strong></div></div>';
   const expired=r.expires<=today;
   return '<div class="dad-history-row"><b>'+esc(r.address)+'</b><div>'+esc(r.owner)+' · '+(r.platform==='mudah'?'Mudah':'iProperty')+
    '</div><div>'+esc(dadLedgerText('Disiarkan','Posted'))+' '+esc(dadLedgerDate(r.posted))+' · <strong>'+
@@ -2141,6 +2174,8 @@ function dadMatch(row,owner,state,forFacet){
  if(!state)return true;
  if(DAD.status()!=='ready'||!DAD.sourceReady())return !!forFacet;
  if(DAD.blocked(row[SID])||(ended&&state==='pending'))return false;
+ if(state==='relist')return !!DAD.relist(row[SID]);
+ if(state==='reposted')return DAD.reposts(row[SID]).length>0;   // owner 17/11/2026: units an admin ticked Done Reposted, to check them
  const records=dadPortals.map(p=>DAD.get(row[SID],p));
  if(state==='pending')return records.some(rec=>!rec);
  if(state==='expired')return records.some(rec=>rec&&rec.expires<=DAD.today());
@@ -2176,7 +2211,8 @@ function dadCount(sid){
  return tx('dad_count',{n:count});
 }
 function dadLogItems(cycles){
- return cycles.map(c=>'<li><b>'+(c.platform==='mudah'?'Mudah':'iProperty')+'</b> · '+esc(tx('dad_date',{date:dadDate(c.posted)}))+
+ return cycles.map(c=>c.platform==='repost'?'<li><b>Done Reposted</b> · '+esc(dadLedgerText('Repost ','Reposted ')+dadDate(c.posted))+
+  '<small>'+esc(dadLedgerText('Untuk lelongan ','For the auction on ')+dadDate(c.round))+'</small></li>':'<li><b>'+(c.platform==='mudah'?'Mudah':'iProperty')+'</b> · '+esc(tx('dad_date',{date:dadDate(c.posted)}))+
   '<small>'+esc(tx(c.expires<=DAD.today()?'dad_past':'dad_until',{date:dadDate(c.expires)}))+
   (c.cleared?' · '+esc(tx('dad_cleared',{date:dadDate(c.cleared)})):'')+'</small></li>').join('');
 }
@@ -2188,6 +2224,16 @@ function dadRmkBox(sid){const m=DAD.status()==='ready'&&DAD.remark(sid),ok=DAD.s
   '<div class="dad-rmk-a"><button type="button" class="btn dad-rmk-save"'+(ok?'':' disabled')+'>'+esc(dadLedgerText('Simpan remarks','Save remark'))+'</button>'+
   '<button type="button" class="btn dad-rmk-del"'+(m?'':' hidden')+'>'+esc(dadLedgerText('Buang remarks','Remove remark'))+'</button>'+
   '<small class="dad-rmk-s">'+(m&&m.on?esc(dadLedgerText('Disimpan ','Saved ')+dadDate(m.on)):'')+'</small></div></div>'}
+// owner 17/11/2026: a unit whose ads were done and that is back at auction with a new date: the alert and the Done Reposted button
+function dadRepostHtml(sid){
+ if(DAD.status()!=='ready'||!DAD.sourceReady()||DAD.blocked(sid))return '';
+ const rl=DAD.relist(sid),last=DAD.reposts(sid)[0],key=sid+'/repost';
+ if(rl)return '<div class="dad-relist" role="alert">\u26A0\uFE0F '+esc(dadLedgerText('MASUK LELONG SEMULA: tarikh baharu '+dadDate(rl.round)+' (iklan dibuat untuk lelongan '+dadDate(rl.prev)+'). Post semula iklan, kemudian tekan Done Reposted.',
+   'BACK AT AUCTION: new date '+dadDate(rl.round)+' (the ads were done for the auction on '+dadDate(rl.prev)+'). Repost the ads, then press Done Reposted.'))+'</div>'+
+  '<button type="button" class="btn dad-repost"'+(dadSaving.has(key)?' disabled':'')+'>\u2713 Done Reposted</button>'+
+  (dadErrors.has(key)?'<small class="dad-note">'+esc(tx('dad_save_error'))+'</small>':'');
+ return last?'<small class="dad-reposted">\u2713 '+esc(dadLedgerText('Repost '+dadDate(last.on)+' · lelongan '+dadDate(last.round),'Reposted '+dadDate(last.on)+' · auction '+dadDate(last.round)))+'</small>':'';
+}
 function dadCard(r,ended){
  const sid=r[SID],owner=DAD.owner(r);
  if(!sid||!owner)return '';
@@ -2200,10 +2246,12 @@ function dadCard(r,ended){
    (portal==='mudah'?'Mudah':'iProperty')+'</b><small class="dad-note">'+esc(dadNote(sid,portal,ended))+'</small></span></label>';
  }).join('');
  const clipboard='<svg class="dad-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="8" y="2" width="8" height="5" rx="2"/><path d="m8 14 3 3 5-6"/></svg>';
- return '<details class="dad-card" data-sid="'+esc(sid)+'"'+(ended?' data-ended':'')+(ended&&!cycles.length?' hidden':'')+'><summary>'+clipboard+
+ const rp=dadRepostHtml(sid);
+ return '<details class="dad-card'+(ready&&DAD.relist(sid)?' relist':'')+'" data-sid="'+esc(sid)+'"'+(ended?' data-ended':'')+(ended&&!cycles.length?' hidden':'')+'><summary>'+clipboard+
   '<span class="dad-title">'+esc(tx('dad_heading'))+'</span><span class="dad-byline">'+esc(tx('dad_saved_for',{admin:owner}))+
   '<span class="dad-last">'+(cycles.length?esc(tx('dad_last',{date:dadDate(cycles[0].posted)})):'')+'</span><span class="dad-rmk-pv">'+dadRmkPreview(sid)+'</span></span>'+
-  '<span class="dad-count">'+esc(dadCount(sid))+'</span></summary><div class="dad-body"><small class="dad-source"'+(DAD.sourceReady()?' hidden':'')+'>'+esc(tx('dad_source_error'))+'</small>'+rows+
+  '<span class="dad-count">'+esc(dadCount(sid))+'</span></summary><div class="dad-body"><small class="dad-source"'+(DAD.sourceReady()?' hidden':'')+'>'+esc(tx('dad_source_error'))+'</small>'+
+  '<div class="dad-rp" data-h="'+esc(rp)+'">'+rp+'</div>'+rows+
   dadRmkBox(sid)+
   '<details class="dad-log"'+(cycles.length?'':' hidden')+'><summary>'+esc(tx('dad_log'))+'</summary><ol>'+dadLogItems(cycles)+'</ol></details>'+
   '<button type="button" class="btn dad-retry"'+(DAD.status()==='error'||!DAD.sourceReady()?'':' hidden')+'>'+esc(tx('dad_retry'))+'</button></div></details>';
@@ -2211,6 +2259,8 @@ function dadCard(r,ended){
 // the ads state of a unit for its card: done = every portal posted and not expired; part = some; exp = posted before, all expired now
 function adsState(sid){
  if(!faOn()||!sid||DAD.status()!=='ready'||!DAD.sourceReady()||DAD.blocked(sid))return null;
+ const rl=DAD.relist(sid);
+ if(rl)return {st:'relist',i:'\u27F3',t:dadLedgerText('MASUK LELONG SEMULA · POST SEMULA IKLAN','BACK AT AUCTION · REPOST THE ADS'),d:dadLedgerText('Lelongan ','Auction ')+dadDate(rl.round)};
  const nm=p=>p==='mudah'?'Mudah':'iProperty',recs=dadPortals.map(p=>[p,DAD.get(sid,p)]).filter(x=>x[1]),live=recs.filter(x=>x[1].expires>DAD.today());
  if(live.length===dadPortals.length)return {st:'done',i:'✓',t:dadLedgerText('IKLAN SIAP','ADS DONE'),d:live.map(x=>nm(x[0])).join(' + ')};
  if(live.length)return {st:'part',i:live.length+'/'+dadPortals.length,t:dadLedgerText('IKLAN SEPARUH SIAP','ADS PARTLY DONE'),d:live.map(x=>nm(x[0])).join(' + ')+dadLedgerText(' sahaja',' only')};
@@ -2249,6 +2299,7 @@ function dadSync(){
   const logHtml=dadLogItems(cycles);
   if(log.lastElementChild.innerHTML!==logHtml)log.lastElementChild.innerHTML=logHtml;
   d.querySelector('.dad-source').hidden=DAD.sourceReady();
+  {const rp=d.querySelector('.dad-rp'),h=dadRepostHtml(sid);if(rp&&rp.dataset.h!==h){rp.innerHTML=h;rp.dataset.h=h}d.classList.toggle('relist',!!(ready&&DAD.relist(sid)))}
   d.querySelector('.dad-retry').hidden=DAD.status()!=='error'&&DAD.sourceReady();
   {const m=DAD.status()==='ready'&&DAD.remark(sid),t=d.querySelector('.dad-rmk-t'),pv=d.querySelector('.dad-rmk-pv');
    if(pv)pv.innerHTML=dadRmkPreview(sid);
@@ -2571,7 +2622,7 @@ function faTplAd(r,emo){
  const note=['','Kindly note the following:','+ NO INSIDE VIEWING. Self-survey from outside only','+ Cash ready: 10% Deposit | 5% legal cost | 2-5% misc'];
  if(emo)L.push(...mapL,...note);else L.push(...note,...mapL);
  const co=Array.isArray(ADS?.contact)?ADS.contact.map(clean).filter(Boolean):[];if(co.length)L.push('',...co);else miss.push('fa_m_contact');
- L.push('',(emo?'📢 ':'')+'Get FIRST ACCESS!','View our website:','https://client.lelongbidgroup.com','Join my Telegram:','https://t.me/lelongbid8');
+ L.push('',(emo?'📢 ':'')+'Get FIRST ACCESS!','View our website:','https://client.lelongbidgroup.com');   // 17/11/2026 (owner): no Telegram line
  let text=L.join('\n').trim();if(!emo)text=text.replace(/\p{Extended_Pictographic}️?/gu,'').replace(/[ \t]+$/gm,'');
  return {text,miss,src:bed?(a.src||''):'',n:a.n||0,amen:cv.amen,osm:cv.osm}}
 // Plain text for Telegram. Keep contacts in the encrypted specialist ad pack.
@@ -2717,8 +2768,7 @@ function faTelegram(r) {
    lines.push(contact ? contact[1]+(index===0?'  ':'   ')+contact[2] : line);
   });
  } else miss.push('fa_m_contact');
- lines.push('','📢 Get FIRST ACCESS!', 'View our website:', 'https://client.lelongbidgroup.com',
-  'Join my Telegram:', 'https://t.me/lelongbid8');
+ lines.push('','📢 Get FIRST ACCESS!', 'View our website:', 'https://client.lelongbidgroup.com');   // 17/11/2026 (owner): no Telegram line
  return {text:lines.join('\n').trim(),miss,src:bed?(a.src||''):'',n:a.n||0,
   amen:nearby.amen.length>0,osm:!!(nearby.amen.length||nearby.highway)&&!!nearby.osm};
 }
@@ -2793,8 +2843,7 @@ function faIprop(r) {
  } else miss.push('fa_m_date');
  lines.push('', 'Kindly note the following:',
   '+ NO INSIDE VIEWING. Self-survey from outside only',
-  '+ Cash ready: 10% Deposit | 5% legal cost | 2-5% misc',
-  '', 'Subscribe telegram channel for latest listing : https://t.me/lelongbid8');
+  '+ Cash ready: 10% Deposit | 5% legal cost | 2-5% misc');   // 17/11/2026 (owner): the Telegram subscribe line is gone
  // The pack's contact lines, without the colon after Contact and without the agency after the REN number.
  const contact = Array.isArray(ADS?.contact) ? ADS.contact.map(clean).filter(Boolean) : [];
  if (contact.length) lines.push('', ...contact.map(v=>v.replace(/^Contact:$/i,'Contact').replace(/^(REN:\s*\d+)\s*\(.*\)$/i,'$1')));
@@ -3093,6 +3142,10 @@ $('list').addEventListener('click',async e=>{const b=e.target.closest('.dad-rmk-
  b.disabled=true;st.textContent=dadLedgerText('Menyimpan\u2026','Saving\u2026');
  try{if(b.classList.contains('dad-rmk-del'))await DAD.removeRemark(sid);else await DAD.saveRemark(sid,t.value);delete t.dataset.dirty;dadSync()}
  catch(err){st.textContent=dadLedgerText('Tidak dapat disimpan. Cuba lagi.','Could not save. Please try again.')}finally{b.disabled=false}});
+$('list').addEventListener('click',async e=>{const b=e.target.closest('.dad-repost');if(!b||!faOn())return;
+ const d=b.closest('.dad-card'),sid=d&&d.dataset.sid,key=sid+'/repost';if(!sid||dadSaving.has(key))return;
+ dadSaving.add(key);dadErrors.delete(key);dadSync();
+ try{await DAD.repost(sid)}catch{dadErrors.add(key);toast(tx('dad_save_error'))}finally{dadSaving.delete(key);dadSync()}});
 $('list').addEventListener('change',async e=>{
  const box=e.target.closest('.dad-card input[data-portal]');
  if(!box||!faOn())return;
