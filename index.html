@@ -601,6 +601,7 @@ html.ps-on{overflow:hidden}
 .ps-tip{position:fixed;z-index:9999;max-width:min(340px,calc(100vw - 32px));background:#0e1a2d;color:#f8ebbd;border:2px solid #f3d778;border-radius:14px;padding:12px 14px;font-weight:800;line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 @keyframes psPulse{0%,100%{box-shadow:0 0 0 4px #f3d778,0 0 22px 6px rgba(243,215,120,.6)}50%{box-shadow:0 0 0 6px #ffe9a3,0 0 44px 16px rgba(243,215,120,.95)}}
 @media (prefers-reduced-motion:reduce){.ps-ring{animation:none}}
+.gate .gate-paste{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin-top:10px;font-weight:800;background:linear-gradient(90deg,#f3d778,#e2bf5a);color:#1a1406;border-color:#c9a227}
 .vseg{display:none!important}
 @media (prefers-reduced-motion:reduce){.havecode::after,#haveCode::after{animation:none}}
 @media (prefers-reduced-motion:reduce){.gate .codewrap{animation:none}}
@@ -3663,27 +3664,49 @@ function freeMode(){RTRIAL=TRIAL=true;LANDING=SIP_URL.replace(/#.*$/,'');documen
 // Premium code); 'Back to the free preview' still closes it. A saved Premium / VIP code never sees it: access() opens the unit straight.
 // owner 19/11/2026: a reader from the guide (proses.lelongbidgroup.com) has just copied the Premium code. No guide, no language question:
 // the screen goes dark except the 'I have an access code' button, which glows; nothing else can be pressed until it is.
-function prosesSpot(){const b=G('haveCode');if(!b)return;b.hidden=false;
- try{history.replaceState(history.state,'',location.pathname+location.hash)}catch(e){}
- try{b.scrollIntoView({block:'center'})}catch(e){}
- {const r=b.getBoundingClientRect();if(!(r.width>8&&r.height>8)||getComputedStyle(b).visibility==='hidden')return}   // never a dark screen with nothing to press
+// spotOn(el, text): the screen goes dark except el, which glows, with text beside it; nothing else can be pressed. Returns the off switch.
+// Never a dark screen with nothing to press: no spotlight when el has no size.
+function spotOn(el,text){if(!el)return null;try{el.scrollIntoView({block:'center'})}catch(e){}
+ {const r=el.getBoundingClientRect();if(!(r.width>8&&r.height>8)||getComputedStyle(el).visibility==='hidden')return null}
  const mk=c=>{const d=document.createElement('div');d.className=c;document.body.appendChild(d);return d};
- const shade=[0,1,2,3].map(()=>mk('ps-shade')),ring=mk('ps-ring'),tip=mk('ps-tip');tip.setAttribute('role','alert');
- const bt=(b.textContent||'').trim()||(LANG==='ms'?'Saya ada kod akses':'I have an access code');   // the button's own words, in either language
- tip.textContent=LANG==='ms'?'Tekan butang “'+bt+'” ini, kemudian tampal kod Premium yang anda salin tadi.':'Press this “'+bt+'” button, then paste the Premium code you just copied.';
+ const shade=[0,1,2,3].map(()=>mk('ps-shade')),ring=mk('ps-ring'),tip=mk('ps-tip');tip.setAttribute('role','alert');tip.textContent=text;
  document.documentElement.classList.add('ps-on');
  const S=(d,l,t,w,h)=>{d.style.left=l+'px';d.style.top=t+'px';d.style.width=Math.max(0,w)+'px';d.style.height=Math.max(0,h)+'px'};
- const place=()=>{const r=b.getBoundingClientRect(),p=8,x=r.left-p,y=r.top-p,w=r.width+2*p,h=r.height+2*p,W=innerWidth,H=innerHeight;
+ const place=()=>{const r=el.getBoundingClientRect(),p=8,x=r.left-p,y=r.top-p,w=r.width+2*p,h=r.height+2*p,W=innerWidth,H=innerHeight;
   S(shade[0],0,0,W,y);S(shade[1],0,y+h,W,H-y-h);S(shade[2],0,y,x,h);S(shade[3],x+w,y,W-x-w,h);S(ring,x,y,w,h);
   const th=tip.offsetHeight||80,tw=tip.offsetWidth||300;tip.style.left=Math.max(16,Math.min(W-16-tw,x+w/2-tw/2))+'px';tip.style.top=(y+h+14+th<H?y+h+14:Math.max(16,y-14-th))+'px'};
  place();const t=setInterval(place,300);addEventListener('resize',place);
- b.addEventListener('click',()=>{clearInterval(t)},{once:true});
+ return ()=>{clearInterval(t);removeEventListener('resize',place);shade.concat([ring,tip]).forEach(d=>d.remove());document.documentElement.classList.remove('ps-on')}}
+const btnWords=(b,ms,en)=>(b&&(b.textContent||'').trim())||(LANG==='ms'?ms:en);
+// owner 19/11/2026: a reader from the guide (proses.lelongbidgroup.com) has just copied the Premium code. No guide, no language question:
+// the screen goes dark except the 'I have an access code' button, which glows; nothing else can be pressed until it is.
+function prosesSpot(){const b=G('haveCode');if(!b)return;b.hidden=false;
+ try{history.replaceState(history.state,'',location.pathname+location.hash)}catch(e){}
+ const bt=btnWords(b,'Saya ada kod akses','I have an access code');   // the button's own words, in either language
+ const off=spotOn(b,LANG==='ms'?'Tekan butang \u201C'+bt+'\u201D ini, kemudian tampal kod Premium yang anda salin tadi.':'Press this \u201C'+bt+'\u201D button, then paste the Premium code you just copied.');
+ if(off)b.addEventListener('click',off,{once:true});
  gtrack('proses_spot',{})}
+// owner 19/11/2026: on the code screen, the same reader gets a Paste button and must press it (the code from the clipboard goes into the
+// field), then the spotlight moves to Open list. Where the browser will not read the clipboard, the reader pastes into the field by hand.
+function gatePasteSpot(){const g=G('gate'),inp=G('gateCode'),form=G('gateForm');if(!g||g.hidden||!inp||!form)return;
+ try{const u=new URL(location.href);['dari','t'].forEach(k=>u.searchParams.delete(k));history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}
+ const open=form.querySelector('button[type=submit]'),ow=btnWords(open,'Buka senarai','Open list');
+ let pb=G('gatePaste');if(!pb){pb=document.createElement('button');pb.type='button';pb.id='gatePaste';pb.className='btn gate-paste';
+  pb.innerHTML='<span aria-hidden="true">\uD83D\uDCCB</span> '+esc(LANG==='ms'?'Tampal kod':'Paste the code');inp.closest('.codewrap').insertAdjacentElement('afterend',pb)}
+ const pw=LANG==='ms'?'Tampal kod':'Paste the code';   // the button's words, without its icon
+ let off=null;const swap=(el,text)=>{if(off)off();off=spotOn(el,text)};
+ const toOpen=()=>{swap(open,LANG==='ms'?'Kod sudah ditampal. Sekarang tekan \u201C'+ow+'\u201D.':'The code is in. Now press \u201C'+ow+'\u201D.');if(open)open.addEventListener('click',()=>{if(off){off();off=null}},{once:true})};
+ const byHand=()=>{try{inp.focus()}catch(e){}swap(inp.closest('.codewrap'),LANG==='ms'?'Tekan lama dalam kotak ini, pilih Tampal (Paste), kemudian tekan \u201C'+ow+'\u201D.':'Press and hold in this box, choose Paste, then press \u201C'+ow+'\u201D.');
+  const watch=()=>{if(inp.value.trim().length>=8){inp.removeEventListener('input',watch);toOpen()}};inp.addEventListener('input',watch)};
+ pb.onclick=async()=>{let t='';try{t=(await navigator.clipboard.readText()||'').trim()}catch(e){}
+  if(t){inp.value=t.slice(0,32);inp.dispatchEvent(new Event('input',{bubbles:true}));gtrack('gate_paste',{ok:1});toOpen()}else{gtrack('gate_paste',{ok:0});byHand()}};
+ swap(pb,LANG==='ms'?'Tekan \u201C'+pw+'\u201D untuk menampal kod Premium yang anda salin tadi.':'Press \u201C'+pw+'\u201D to paste the Premium code you copied.');
+ gtrack('gate_paste_spot',{})}
 function shareGate(){if((location.hash||'').length<2)return;let had='';try{had=localStorage.getItem('lelong.hadcode')||''}catch(e){}if(had)return;
  setTimeout(()=>{openGate('gate_share');gtrack('shared_code_ask',{})},300)}
-function goCode(){gtrack('have_code_click',{});if(RTRIAL){G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};openGate('');return}location.href=(PAID_SITE||BASE)+'?gate=1'+(FROMPROSES?'&lang='+LANG+'&t='+Date.now().toString(36):'')}   // &t: a fresh page, never a cached one (19/11/2026)
+function goCode(){gtrack('have_code_click',{});if(RTRIAL){G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};openGate('');return}location.href=(PAID_SITE||BASE)+'?gate=1'+(FROMPROSES?'&dari=proses&lang='+LANG+'&t='+Date.now().toString(36):'')}   // &t: a fresh page, never a cached one (19/11/2026)
 function freeShare(){freeMode();try{sessionStorage.removeItem('lelong.welcome')}catch(e){}G('haveCode').hidden=false;G('haveCode').onclick=goCode;G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};
- if(/[?&]gate=1/.test(location.search)){try{const u=new URL(location.href);u.searchParams.delete('gate');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}setTimeout(()=>openGate(''),250)}start()}
+ if(/[?&]gate=1/.test(location.search)){try{const u=new URL(location.href);u.searchParams.delete('gate');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}setTimeout(()=>openGate(''),250);if(FROMPROSES&&!TRIAL)setTimeout(gatePasteSpot,900)}start()}
 function agentSwitch(t){const k=AVIEW;t.className='tier-tag aview '+k;
  t.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+TAG[k][1]+'</svg><span>'+TAG[k][0]+'</span><svg class="aview-car" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
  const s=document.createElement('select');s.id='aviewSel';s.dataset.i18nAl='aview_al';s.setAttribute('aria-label',tx('aview_al'));
