@@ -3343,7 +3343,7 @@ if(sharedId)track('shared_unit_open',{unit_id:sharedId});
 viewUI();paint();render();LASTSNAP=JSON.stringify(snapNow());
 if(faOn())DAD.start(dadSync);
 atRentRow=id=>{const r=DATA.find(x=>x[20]===id);return !!r&&Array.isArray(r[33])&&r[33].some(a=>Array.isArray(a)&&num(a[0])>0)};
-if(FROMPROSES&&TRIAL)setTimeout(prosesSpot,700);else if(!sharedId&&agTourDue())setTimeout(agTourStart,500);else if(welcomePending())setTimeout(showWelcome,400);else if(!ls.get('guide')&&!sharedId&&!GATEASK)setTimeout(guideOpen,500);   // an agent's first visit: the dismissible walkthrough; a fresh code: the welcome first, the guide after it
+if(FROMPROSES&&TRIAL&&!GATEASK)setTimeout(prosesSpot,700);else if(!sharedId&&agTourDue())setTimeout(agTourStart,500);else if(welcomePending())setTimeout(showWelcome,400);else if(!ls.get('guide')&&!sharedId&&!GATEASK)setTimeout(guideOpen,500);   // an agent's first visit: the dismissible walkthrough; a fresh code: the welcome first, the guide after it
 if(sharedId)setTimeout(()=>toFirst(true),350);   // shared unit link (#id, 29/10/2026): open straight on that unit's card, not the top of the page
 // ===== AI assistant (2/11/2026): an on-screen character (two looks) that answers questions about the auction data in this page,
 // shows the client around by highlighting and tapping the page's own controls, and reads the daily market summary written by the
@@ -3706,7 +3706,7 @@ function shareGate(){if((location.hash||'').length<2)return;let had='';try{had=l
  setTimeout(()=>{openGate('gate_share');gtrack('shared_code_ask',{})},300)}
 function goCode(){gtrack('have_code_click',{});if(RTRIAL){G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};openGate('');return}location.href=(PAID_SITE||BASE)+'?gate=1'+(FROMPROSES?'&dari=proses&lang='+LANG+'&t='+Date.now().toString(36):'')}   // &t: a fresh page, never a cached one (19/11/2026)
 function freeShare(){freeMode();try{sessionStorage.removeItem('lelong.welcome')}catch(e){}G('haveCode').hidden=false;G('haveCode').onclick=goCode;G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};
- if(/[?&]gate=1/.test(location.search)){try{const u=new URL(location.href);u.searchParams.delete('gate');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}setTimeout(()=>openGate(''),250);if(FROMPROSES&&!TRIAL)setTimeout(gatePasteSpot,900)}start()}
+ if(/[?&]gate=1/.test(location.search)){try{const u=new URL(location.href);u.searchParams.delete('gate');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}setTimeout(()=>openGate(''),250);if(FROMPROSES)setTimeout(gatePasteSpot,900)}start()}
 function agentSwitch(t){const k=AVIEW;t.className='tier-tag aview '+k;
  t.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+TAG[k][1]+'</svg><span>'+TAG[k][0]+'</span><svg class="aview-car" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
  const s=document.createElement('select');s.id='aviewSel';s.dataset.i18nAl='aview_al';s.setAttribute('aria-label',tx('aview_al'));
