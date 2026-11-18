@@ -594,6 +594,13 @@ body{padding-block-end:100px}
 .havecode:hover,.havecode:focus-visible,#haveCode:hover,#haveCode:focus-visible{box-shadow:0 0 0 1.5px rgba(217,181,74,1),0 0 20px rgba(217,181,74,.5),0 0 38px rgba(79,209,197,.22);transform:translateY(-1px);outline:none}
 .havecode .key,#haveCode .key{width:16px;height:16px;fill:#ecd27e;flex:none;filter:drop-shadow(0 0 4px rgba(236,210,126,.5))}
 .trial-bar #haveCode{flex:1 1 100%;width:100%;min-height:48px;font-size:1rem;margin-top:2px}
+/* owner 19/11/2026: the forced spotlight on 'I have an access code' for a reader sent from the guide */
+html.ps-on{overflow:hidden}
+.ps-shade{position:fixed;z-index:9998;background:rgba(3,8,18,.8)}
+.ps-ring{position:fixed;z-index:9999;pointer-events:none;border-radius:999px;box-shadow:0 0 0 4px #f3d778,0 0 30px 10px rgba(243,215,120,.85);animation:psPulse 1.2s ease-in-out infinite}
+.ps-tip{position:fixed;z-index:9999;max-width:min(340px,calc(100vw - 32px));background:#0e1a2d;color:#f8ebbd;border:2px solid #f3d778;border-radius:14px;padding:12px 14px;font-weight:800;line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+@keyframes psPulse{0%,100%{box-shadow:0 0 0 4px #f3d778,0 0 22px 6px rgba(243,215,120,.6)}50%{box-shadow:0 0 0 6px #ffe9a3,0 0 44px 16px rgba(243,215,120,.95)}}
+@media (prefers-reduced-motion:reduce){.ps-ring{animation:none}}
 .vseg{display:none!important}
 @media (prefers-reduced-motion:reduce){.havecode::after,#haveCode::after{animation:none}}
 @media (prefers-reduced-motion:reduce){.gate .codewrap{animation:none}}
@@ -1225,7 +1232,8 @@ const AGENT={name:'Firdaus Jay',phone:'019-6522361',wa:'https://wa.me/6019652236
 try{const v=document.querySelector('.sub2 .sub-av');if(v)v.textContent=AGENT.name.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase()}catch(e){}   // the contact card's initials, from the agent's own name
 // Settings kept on the client's own device (text size, language, saved units, view, last search, guide seen), under this site's prefix.
 const ls={get:k=>{try{return localStorage.getItem(KP+k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(KP+k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(KP+k)}catch(e){}}};
-let LANG=ls.get('lang')==='ms'?'ms':'en';
+let LANG=(()=>{let p='';try{p=new URLSearchParams(location.search).get('lang')||''}catch(e){}if(p==='ms'||p==='en'){ls.set('lang',p);return p}return ls.get('lang')==='ms'?'ms':'en'})();   // ?lang= (owner 19/11/2026): a reader sent from the guide keeps its language, no language question
+const FROMPROSES=(()=>{try{return new URLSearchParams(location.search).get('dari')==='proses'}catch(e){return false}})();   // owner 19/11/2026: sent from proses.lelongbidgroup.com with the Premium code copied
 // English / Bahasa Melayu. {name} and {phone} are the agent's; other {x} are filled in by the caller.
 const I18N={en:{
 title:'Hartanah Lelong Malaysia | Bank Auction List | {name}',h1:'Auction Property List',updated:'Updated {d} · from official auction notices',eyebrow:'Members-only list',save_lbl:'You save {v}',pv_price:'Price {p}%',pv_save:'Save {p}%',pv_below:'{p}% below market value',win_lbl:'If you win at',win_base:'auction price',win_below:'{p}% below market value · you save {v}',win_over:'At or above market value',win_up:'Instalment goes up {v} / month',mo_lbl:'Installment ≈ {v} / month',mo_line:'Loan {l} · Downpayment {d}',mo_note:'Estimate only: banks usually lend 90% for a first or second home and 70% from the third. Ask your bank for the real figure.',mo_mar:'Loan margin',mo_m:'Loan {n}%',mo_ten:'Loan tenure',mo_rate:'Interest rate a year',mo_y:'{n} yrs',mo_y1:'{n} yr',mo_avg:'avg',new_tag:'NEW',psf:'RM {v} / sq ft',drop:'Price cut {n} times',drop1:'Price cut once',since:' since {d}',st_av:'units you can still bid on',st_bmv:'{p}%+ below market value',st_new:'new in the last 3 days',totop:'Back to top',st_tap:'Show these units',s_psf:'Lowest price per sq ft',f_new:'New (last 3 days)',chip_rm:'Remove filter: {f}',chip_all:'Clear all',cmp_btn:'⚖ Compare',cmp_t:'Compare saved units',cmp_more:'Showing the first 4 units of your list.',cmp_best:'★ = best in that row.',cmp_disc:'Below market value',cmp_psf:'Price per sq ft',cmp_ten:'Tenure',cmp_nth:'Auction round',sim:'🔍 {n} other {c} units for sale in {d}',sim1:'🔍 1 other {c} unit for sale in {d}',copy_al:'Copy address',addr_copied:'Address copied',pos_dl:'Download POS',pos_only:'Only agents can see this button. VIP and Premium clients only see the "Request POS from agent" button.',pos_wait:'Opening the POS in a new tab… (a few seconds)',loading:'Loading listings…',load_err:'Could not load listings. Refresh the page to try again.',
@@ -3333,7 +3341,7 @@ if(sharedId)track('shared_unit_open',{unit_id:sharedId});
 viewUI();paint();render();LASTSNAP=JSON.stringify(snapNow());
 if(faOn())DAD.start(dadSync);
 atRentRow=id=>{const r=DATA.find(x=>x[20]===id);return !!r&&Array.isArray(r[33])&&r[33].some(a=>Array.isArray(a)&&num(a[0])>0)};
-if(!sharedId&&agTourDue())setTimeout(agTourStart,500);else if(welcomePending())setTimeout(showWelcome,400);else if(!ls.get('guide')&&!sharedId)setTimeout(guideOpen,500);   // an agent's first visit: the dismissible walkthrough; a fresh code: the welcome first, the guide after it
+if(FROMPROSES&&TRIAL)setTimeout(prosesSpot,700);else if(!sharedId&&agTourDue())setTimeout(agTourStart,500);else if(welcomePending())setTimeout(showWelcome,400);else if(!ls.get('guide')&&!sharedId)setTimeout(guideOpen,500);   // an agent's first visit: the dismissible walkthrough; a fresh code: the welcome first, the guide after it
 if(sharedId)setTimeout(()=>toFirst(true),350);   // shared unit link (#id, 29/10/2026): open straight on that unit's card, not the top of the page
 // ===== AI assistant (2/11/2026): an on-screen character (two looks) that answers questions about the auction data in this page,
 // shows the client around by highlighting and tapping the page's own controls, and reads the daily market summary written by the
@@ -3652,9 +3660,26 @@ function freeMode(){RTRIAL=TRIAL=true;LANDING=SIP_URL.replace(/#.*$/,'');documen
 // site or an agent's preview goes to the paid site, which opens the code screen on arrival (?gate=1)
 // Owner 12/11/2026: a shared unit link opened by a Free client who never entered a code asks for the access code first (the 7-day
 // Premium code); 'Back to the free preview' still closes it. A saved Premium / VIP code never sees it: access() opens the unit straight.
+// owner 19/11/2026: a reader from the guide (proses.lelongbidgroup.com) has just copied the Premium code. No guide, no language question:
+// the screen goes dark except the 'I have an access code' button, which glows; nothing else can be pressed until it is.
+function prosesSpot(){const b=G('haveCode');if(!b)return;b.hidden=false;
+ try{history.replaceState(history.state,'',location.pathname+location.hash)}catch(e){}
+ try{b.scrollIntoView({block:'center'})}catch(e){}
+ {const r=b.getBoundingClientRect();if(!(r.width>8&&r.height>8)||getComputedStyle(b).visibility==='hidden')return}   // never a dark screen with nothing to press
+ const mk=c=>{const d=document.createElement('div');d.className=c;document.body.appendChild(d);return d};
+ const shade=[0,1,2,3].map(()=>mk('ps-shade')),ring=mk('ps-ring'),tip=mk('ps-tip');tip.setAttribute('role','alert');
+ tip.textContent=LANG==='ms'?'Tekan butang “I have an access code” ini, kemudian tampal kod Premium yang anda salin tadi.':'Press this “I have an access code” button, then paste the Premium code you just copied.';
+ document.documentElement.classList.add('ps-on');
+ const S=(d,l,t,w,h)=>{d.style.left=l+'px';d.style.top=t+'px';d.style.width=Math.max(0,w)+'px';d.style.height=Math.max(0,h)+'px'};
+ const place=()=>{const r=b.getBoundingClientRect(),p=8,x=r.left-p,y=r.top-p,w=r.width+2*p,h=r.height+2*p,W=innerWidth,H=innerHeight;
+  S(shade[0],0,0,W,y);S(shade[1],0,y+h,W,H-y-h);S(shade[2],0,y,x,h);S(shade[3],x+w,y,W-x-w,h);S(ring,x,y,w,h);
+  const th=tip.offsetHeight||80,tw=tip.offsetWidth||300;tip.style.left=Math.max(16,Math.min(W-16-tw,x+w/2-tw/2))+'px';tip.style.top=(y+h+14+th<H?y+h+14:Math.max(16,y-14-th))+'px'};
+ place();const t=setInterval(place,300);addEventListener('resize',place);
+ b.addEventListener('click',()=>{clearInterval(t)},{once:true});
+ gtrack('proses_spot',{})}
 function shareGate(){if((location.hash||'').length<2)return;let had='';try{had=localStorage.getItem('lelong.hadcode')||''}catch(e){}if(had)return;
  setTimeout(()=>{openGate('gate_share');gtrack('shared_code_ask',{})},300)}
-function goCode(){gtrack('have_code_click',{});if(RTRIAL){G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};openGate('');return}location.href=(PAID_SITE||BASE)+'?gate=1'}
+function goCode(){gtrack('have_code_click',{});if(RTRIAL){G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};openGate('');return}location.href=(PAID_SITE||BASE)+'?gate=1'+(FROMPROSES?'&lang='+LANG:'')}
 function freeShare(){freeMode();try{sessionStorage.removeItem('lelong.welcome')}catch(e){}G('haveCode').hidden=false;G('haveCode').onclick=goCode;G('gateBack').hidden=false;G('gateBack').onclick=()=>{G('gate').hidden=true};
  if(/[?&]gate=1/.test(location.search)){try{const u=new URL(location.href);u.searchParams.delete('gate');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}setTimeout(()=>openGate(''),250)}start()}
 function agentSwitch(t){const k=AVIEW;t.className='tier-tag aview '+k;
