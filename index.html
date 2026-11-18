@@ -479,6 +479,7 @@ html.trial #cyNote,html.trial #bmvSeg,html.trial #cyBtn,html.trial #cyPanel{disp
 .dad-rp:empty{display:none}.dad-rp{margin:0 0 10px}.dad-relist{background:#fff7ed;color:#7c2d12;border:2px solid #f59e0b;border-radius:10px;padding:10px 12px;font-weight:700;line-height:1.4}
 .dad-repost{margin-top:8px;min-height:44px;background:#f59e0b!important;color:#1c1003!important;border-color:#d97706!important;font-weight:800}
 .dad-reposted{display:block;font-weight:700;color:#16a34a}
+.dad-unrepost{margin-top:6px;min-height:40px;font-size:.9rem}
 .card[data-ads=exp]{border:2px solid var(--red)}.ads-flag.exp{background:var(--red-bg);color:var(--red)}.ads-flag.exp .af-i{background:var(--red);color:var(--red-bg)}
 @media print{.ads-flag{display:none}}
 @media print{.card.picked{box-shadow:none;animation:none;border-color:var(--line)}}
@@ -1868,7 +1869,7 @@ const DAD = (() => {
   if(!data||typeof data.relist!=='object'||!data.relist||Array.isArray(data.relist))return false;
   const nextR=new Map(Object.entries(data.relist).filter(([sid,v])=>validSid(sid)&&v&&iso(v.round)&&iso(v.prev)).map(([sid,v])=>[sid,{round:v.round,prev:v.prev}]));
   const nextP=new Map(Object.entries(data.reposts&&typeof data.reposts==='object'?data.reposts:{}).filter(([sid,v])=>validSid(sid)&&Array.isArray(v))
-    .map(([sid,v])=>[sid,v.filter(x=>x&&iso(x.round)&&iso(x.on)).map(x=>({round:x.round,on:x.on}))]));
+    .map(([sid,v])=>[sid,v.filter(x=>x&&iso(x.round)&&iso(x.on)).map(x=>({round:x.round,on:x.on,cleared:iso(x.cleared)?x.cleared:null}))]));
   if(JSON.stringify([...nextR])===JSON.stringify([...relist])&&JSON.stringify([...nextP])===JSON.stringify([...reposted]))return false;
   relist.clear();nextR.forEach((v,k)=>relist.set(k,v));reposted.clear();nextP.forEach((v,k)=>reposted.set(k,v));return true;
  }
@@ -1881,6 +1882,14 @@ const DAD = (() => {
    const {data,conflict}=await request('PUT',{sid,round:rl.round},'/repost');
    writeRevision++;takeRelist(data);if(iso(data.today))stamp=data.today;changed();
    if(conflict)throw new Error('Auction date changed');
+  }catch(err){refresh();throw err}
+ }
+ async function unrepost(sid,round){   // owner 18/11/2026: untick Done Reposted; the portal keeps the tick and the untick in the history
+  if(state!=='ready'||!sourceReady||blocked.has(sid)||!validSid(sid)||!iso(round))throw new Error('Untick unavailable');
+  try{
+   const {data,conflict}=await request('PUT',{sid,round,done:false},'/repost');
+   writeRevision++;takeRelist(data);if(iso(data.today))stamp=data.today;changed();
+   if(conflict)throw new Error('Repost changed');
   }catch(err){refresh();throw err}
  }
  function remark(sid){return remarks.get(canonical(sid))||remarks.get(sid)||null}
@@ -1902,7 +1911,7 @@ const DAD = (() => {
    if(cycles?.length)return cycles;
    const rec=get(id,platform);
    return rec?[{platform,posted:rec.posted,expires:rec.expires,cleared:null}]:[];
-  }).concat((reposted.get(id)||[]).map(x=>({platform:'repost',posted:x.on,round:x.round,expires:'',cleared:null})))
+  }).concat((reposted.get(id)||[]).map(x=>({platform:'repost',posted:x.on,round:x.round,expires:'',cleared:x.cleared||null})))
    .sort((a,b)=>b.posted.localeCompare(a.posted));
  }
  function history(owner,allPostings=false) {
@@ -1918,7 +1927,7 @@ const DAD = (() => {
   return rows.sort((a,b)=>(allPostings?b.posted.localeCompare(a.posted):a.expires.localeCompare(b.expires))||a.address.localeCompare(b.address));
  }
  return {owner:nameOf,status:()=>state,get,start,refresh,set,remark,saveRemark,removeRemark,today:()=>stamp,history,postings,blocked:sid=>blocked.has(sid),sourceReady:()=>sourceReady,
-  relist:relistOf,reposts:repostsOf,repost};
+  relist:relistOf,reposts:repostsOf,repost,unrepost};
 })();
 
 function dadLedgerText(ms,en){return LANG==='ms'?ms:en;}
@@ -1939,7 +1948,8 @@ function dadRefreshLedger(){
  const clears=dadLedgerText('Nyah tanda','Uncheck');
  target.innerHTML=selected.slice(0,count).map(r=>{
   if(r.platform==='repost')return '<div class="dad-history-row"><b>'+esc(r.address)+'</b><div>'+esc(r.owner)+' · Done Reposted</div><div>'+
-   esc(dadLedgerText('Repost ','Reposted '))+esc(dadLedgerDate(r.posted))+' · <strong>'+esc(dadLedgerText('Lelongan ','Auction '))+esc(dadLedgerDate(r.round))+'</strong></div></div>';
+   esc(dadLedgerText('Repost ','Reposted '))+esc(dadLedgerDate(r.posted))+' · <strong>'+esc(dadLedgerText('Lelongan ','Auction '))+esc(dadLedgerDate(r.round))+'</strong></div>'+
+   (r.cleared?'<small>'+esc(dadLedgerText('Tick Reposted dibuang ','Reposted unticked ')+dadLedgerDate(r.cleared))+'</small>':'')+'</div>';
   const expired=r.expires<=today;
   return '<div class="dad-history-row"><b>'+esc(r.address)+'</b><div>'+esc(r.owner)+' · '+(r.platform==='mudah'?'Mudah':'iProperty')+
    '</div><div>'+esc(dadLedgerText('Disiarkan','Posted'))+' '+esc(dadLedgerDate(r.posted))+' · <strong>'+
@@ -2175,7 +2185,7 @@ function dadMatch(row,owner,state,forFacet){
  if(DAD.status()!=='ready'||!DAD.sourceReady())return !!forFacet;
  if(DAD.blocked(row[SID])||(ended&&state==='pending'))return false;
  if(state==='relist')return !!DAD.relist(row[SID]);
- if(state==='reposted')return DAD.reposts(row[SID]).length>0;   // owner 17/11/2026: units an admin ticked Done Reposted, to check them
+ if(state==='reposted')return DAD.reposts(row[SID]).some(x=>!x.cleared);   // owner 17/11/2026: units an admin ticked Done Reposted, to check them
  const records=dadPortals.map(p=>DAD.get(row[SID],p));
  if(state==='pending')return records.some(rec=>!rec);
  if(state==='expired')return records.some(rec=>rec&&rec.expires<=DAD.today());
@@ -2212,7 +2222,7 @@ function dadCount(sid){
 }
 function dadLogItems(cycles){
  return cycles.map(c=>c.platform==='repost'?'<li><b>Done Reposted</b> · '+esc(dadLedgerText('Repost ','Reposted ')+dadDate(c.posted))+
-  '<small>'+esc(dadLedgerText('Untuk lelongan ','For the auction on ')+dadDate(c.round))+'</small></li>':'<li><b>'+(c.platform==='mudah'?'Mudah':'iProperty')+'</b> · '+esc(tx('dad_date',{date:dadDate(c.posted)}))+
+  '<small>'+esc(dadLedgerText('Untuk lelongan ','For the auction on ')+dadDate(c.round))+(c.cleared?' · '+dadLedgerText('Tick dibuang ','Unticked ')+dadDate(c.cleared):'')+'</small></li>':'<li><b>'+(c.platform==='mudah'?'Mudah':'iProperty')+'</b> · '+esc(tx('dad_date',{date:dadDate(c.posted)}))+
   '<small>'+esc(tx(c.expires<=DAD.today()?'dad_past':'dad_until',{date:dadDate(c.expires)}))+
   (c.cleared?' · '+esc(tx('dad_cleared',{date:dadDate(c.cleared)})):'')+'</small></li>').join('');
 }
@@ -2232,7 +2242,11 @@ function dadRepostHtml(sid){
    'BACK AT AUCTION: new date '+dadDate(rl.round)+' (the ads were done for the auction on '+dadDate(rl.prev)+'). Repost the ads, then press Done Reposted.'))+'</div>'+
   '<button type="button" class="btn dad-repost"'+(dadSaving.has(key)?' disabled':'')+'>\u2713 Done Reposted</button>'+
   (dadErrors.has(key)?'<small class="dad-note">'+esc(tx('dad_save_error'))+'</small>':'');
- return last?'<small class="dad-reposted">\u2713 '+esc(dadLedgerText('Repost '+dadDate(last.on)+' · lelongan '+dadDate(last.round),'Reposted '+dadDate(last.on)+' · auction '+dadDate(last.round)))+'</small>':'';
+ if(!last||last.cleared)return '';
+ const ukey=sid+'/unrepost';   // owner 18/11/2026: an untick button beside the tick (owner's page only)
+ return '<small class="dad-reposted">\u2713 '+esc(dadLedgerText('Repost '+dadDate(last.on)+' · lelongan '+dadDate(last.round),'Reposted '+dadDate(last.on)+' · auction '+dadDate(last.round)))+'</small>'+
+  '<button type="button" class="btn dad-unrepost" data-round="'+esc(last.round)+'"'+(dadSaving.has(ukey)?' disabled':'')+'>Untick Reposted</button>'+
+  (dadErrors.has(ukey)?'<small class="dad-note">'+esc(tx('dad_save_error'))+'</small>':'');
 }
 function dadCard(r,ended){
  const sid=r[SID],owner=DAD.owner(r);
@@ -3146,6 +3160,11 @@ $('list').addEventListener('click',async e=>{const b=e.target.closest('.dad-repo
  const d=b.closest('.dad-card'),sid=d&&d.dataset.sid,key=sid+'/repost';if(!sid||dadSaving.has(key))return;
  dadSaving.add(key);dadErrors.delete(key);dadSync();
  try{await DAD.repost(sid)}catch{dadErrors.add(key);toast(tx('dad_save_error'))}finally{dadSaving.delete(key);dadSync()}});
+$('list').addEventListener('click',async e=>{const b=e.target.closest('.dad-unrepost');if(!b||!faOn())return;
+ const d=b.closest('.dad-card'),sid=d&&d.dataset.sid,key=sid+'/unrepost';if(!sid||dadSaving.has(key))return;
+ if(!confirm(dadLedgerText('Buang tick Done Reposted untuk unit ini? Tick dan untick kekal dalam Sejarah iklan.','Untick Done Reposted for this unit? The tick and the untick stay in the posting history.')))return;
+ dadSaving.add(key);dadErrors.delete(key);dadSync();
+ try{await DAD.unrepost(sid,b.dataset.round)}catch{dadErrors.add(key);toast(tx('dad_save_error'))}finally{dadSaving.delete(key);dadSync()}});
 $('list').addEventListener('change',async e=>{
  const box=e.target.closest('.dad-card input[data-portal]');
  if(!box||!faOn())return;
