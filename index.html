@@ -120,11 +120,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .lbox{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:calc(60px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:rgba(8,12,16,.94);color:#fff}
 .lbox img{max-width:100%;max-height:100%;min-height:0;object-fit:contain;border-radius:8px}
 .lbox small{font-size:.85rem;opacity:.85}
-.lbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:52px;border:2px solid #fff;border-radius:50%;background:rgba(255,255,255,.94);color:#0b1b3a;font-size:2.2rem;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0 0 4px;box-shadow:0 0 0 4px rgba(0,0,0,.25),0 6px 18px rgba(0,0,0,.45)}   /* 26/11/2026 Jay: brighter arrows that stand out on any photo */
+.lbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:60px;height:80px;border:0;border-radius:12px;background:transparent;color:#ffd166;font-size:3.8rem;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0 0 8px;text-shadow:0 0 2px #3a2600,0 0 6px rgba(0,0,0,.85),0 0 14px rgba(246,196,83,.85),0 0 28px rgba(246,196,83,.5);animation:lbGlow 2.2s ease-in-out infinite}
+@keyframes lbGlow{0%,100%{text-shadow:0 0 2px #3a2600,0 0 6px rgba(0,0,0,.85),0 0 12px rgba(246,196,83,.7),0 0 22px rgba(246,196,83,.35)}50%{text-shadow:0 0 2px #3a2600,0 0 6px rgba(0,0,0,.85),0 0 20px rgba(255,209,102,1),0 0 40px rgba(246,196,83,.75)}}
+@media (prefers-reduced-motion:reduce){.lbox-nav{animation:none}}   /* 26/11/2026 Jay: no white circle, a see-through premium gold arrow that glows, so the photo shows in full and the arrow still catches the eye */
 .lbox-nav[hidden]{display:none}
 .lbox-p{left:max(8px,env(safe-area-inset-left,0px))}
 .lbox-n{right:max(8px,env(safe-area-inset-right,0px))}
-.lbox-nav:hover,.lbox-nav:focus-visible{background:#fff}.lbox-nav:active{transform:translateY(-50%) scale(.94)}
+.lbox-nav:hover,.lbox-nav:focus-visible{background:rgba(0,0,0,.18)}.lbox-nav:active{transform:translateY(-50%) scale(.94)}
 /* Jay 26/11/2026: listing photos cannot be saved, dragged, selected or printed; they blur while the page is not in front */
 .hero,.hero img,.lbox,.lbox img{-webkit-user-select:none;user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
 html.nopix .hero img,html.nopix .lbox img{filter:blur(30px) brightness(.6)}
