@@ -1432,7 +1432,7 @@ fl_bank:'Bank (agent commission)',fa_na:'N/A',fa_restr:'Restriction',rr_h:'Room 
 cd_today:'Today!',cd_tom:'Tomorrow!',cd_in:'In {n} days',cd_yest:'Yesterday',cd_ago:'{n} days ago',nth:'{v} auction',
 wa_btn:'💬 WhatsApp {name} about this unit',wa_btn_end:'💬 Ask {name} about similar units',
 reset_top:'\u21BA Reset',pos_btn:'Request POS from agent',wa_pos:'Hi {name}, please send me the Proclamation of Sale (POS) for this unit:',wa_unit:'Hi {name}, I am interested in this auction unit:',wa_unit_end:'Hi {name}, I saw this unit ({st}). Do you have similar units?',
-wa_price:'Auction price: {p}',wa_date:'Auction date: {d}',what:'What does this mean?',link_copied:'Link copied',
+wa_price:'Auction price: {p}',wa_date:'Auction date: {d}',what:'What does this mean?',link_copied:'Link copied',sh_ph_wait:'Preparing {n} photos\u2026',sh_ph_t:'Share with photos',sh_ph_ready:'{n} photos are ready. Tap the button to share them with the unit details.',sh_ph_go:'Share {n} photos',
 share_list:'Bank auction properties below market value. Contact {name}: {phone}',share_unit:'{t} in {d}, {s}. {p}{b}. Auction {a}.',
 theme_dark:'Switch to dark mode',theme_light:'Switch to light mode',size_al:'Text size',size0:'Normal text',size1:'Bigger text',size2:'Biggest text',
 gate_t:'Private auction list',gate_p:'This list is for clients of {name} only. Enter the access code you received on WhatsApp.',
@@ -1528,7 +1528,7 @@ fl_bank:'Bank (komisen ejen)',fa_na:'N/A',fa_restr:'Sekatan',rr_h:'Sewa bilik',r
 cd_today:'Hari ini!',cd_tom:'Esok!',cd_in:'{n} hari lagi',cd_yest:'Semalam',cd_ago:'{n} hari lepas',nth:'Lelong ke-{v}',
 wa_btn:'💬 WhatsApp {name} tentang unit ini',wa_btn_end:'💬 Tanya {name} tentang unit serupa',
 reset_top:'\u21BA Reset',pos_btn:'Minta POS daripada ejen',wa_pos:'Hi {name}, mohon hantar Perisytiharan Jualan (POS) untuk unit ini:',wa_unit:'Hi {name}, saya berminat dengan unit lelong ini:',wa_unit_end:'Hi {name}, saya nampak unit ini ({st}). Ada unit yang serupa?',
-wa_price:'Harga lelong: {p}',wa_date:'Tarikh lelong: {d}',what:'Apa maksudnya?',link_copied:'Pautan disalin',
+wa_price:'Harga lelong: {p}',wa_date:'Tarikh lelong: {d}',what:'Apa maksudnya?',link_copied:'Pautan disalin',sh_ph_wait:'Menyediakan {n} gambar\u2026',sh_ph_t:'Kongsi dengan gambar',sh_ph_ready:'{n} gambar sudah sedia. Tekan butang untuk kongsi bersama butiran unit.',sh_ph_go:'Kongsi {n} gambar',
 share_list:'Hartanah lelong bank di bawah nilai pasaran. Hubungi {name}: {phone}',share_unit:'{t} di {d}, {s}. {p}{b}. Lelong {a}.',
 theme_dark:'Tukar ke mod gelap',theme_light:'Tukar ke mod cerah',size_al:'Saiz tulisan',size0:'Tulisan biasa',size1:'Tulisan besar',size2:'Tulisan paling besar',
 gate_t:'Senarai lelong peribadi',gate_p:'Senarai ini untuk klien {name} sahaja. Masukkan kod akses yang anda terima di WhatsApp.',
@@ -1738,11 +1738,30 @@ function shareUnitText(r,b){const ms=LANG==='ms',L=[],has=v=>ok(v)&&!locked(v)&&
  line('\u{1F4DC}','Tenure','Pegangan',pv(r[9]));
  L.push('',ms?'\u{1F449} Lihat butiran penuh:':'\u{1F449} See the full details:');
  return L.join('\n')}
+// Jay 26/11/2026 (his Agent Specialist view only): Share sends every photo of the listing (the Telegram album, else the cover) with the text.
+// The photos go as JPEG so WhatsApp shows them as photos (a .webp can arrive as a sticker). If the phone needs a fresh tap after the
+// download, a small window offers one button that shares them.
+function unitPhotoUrls(r){const ph=/^[ub]:[0-9a-f]{20}$/.test(r[32]||'')?r[32]:'';if(!ph)return [];
+ const alb=ph[0]==='u'&&PHS>=0&&Array.isArray(r[PHS])?r[PHS].filter(h=>/^[0-9a-f]{20}$/.test(h)):[];
+ return (alb.length?alb:[ph.slice(2)]).map(h=>IMG+'tg/'+h+'.webp')}
+async function photoFiles(urls){const out=[];
+ await Promise.all(urls.map(async(u,i)=>{try{const bl=await (await fetch(u,{cache:'force-cache'})).blob(),bm=await createImageBitmap(bl),c=document.createElement('canvas');
+  c.width=bm.width;c.height=bm.height;c.getContext('2d').drawImage(bm,0,0);const j=await new Promise(res=>c.toBlob(res,'image/jpeg',.9));
+  if(j)out[i]=new File([j],'lelong-'+(i+1)+'.jpg',{type:'image/jpeg'})}catch(e){}}));
+ return out.filter(Boolean)}
+async function sharePhotos(r,text,url){const urls=unitPhotoUrls(r);if(!urls.length||!navigator.canShare)return false;
+ toast(tx('sh_ph_wait',{n:urls.length}));const files=await photoFiles(urls);
+ if(!files.length||!navigator.canShare({files}))return false;
+ const go=()=>navigator.share({files,text:text+'\n'+url}).then(()=>{track('share_done',{share_type:'unit_photos',n:files.length});return true});
+ try{return await go()}catch(e){if(e&&e.name==='AbortError')return true}
+ openModal(tx('sh_ph_t'),'<p>'+tx('sh_ph_ready',{n:files.length})+'</p>','<button class="btn primary" type="button" id="shPhGo">'+tx('sh_ph_go',{n:files.length})+'</button>');
+ G('shPhGo').onclick=()=>{go().then(()=>closeModal()).catch(()=>{})};return true}
 async function doShare(kind,r){
  const url=BASE+'?utm_source=share&utm_medium='+(r?'unit':'list')+'&utm_campaign=client_share'+(r?'#'+(r[SID]||r[20]):'');
  const b=r?bmvTxt(r):'';
  const text=r?shareUnitText(r,b):tx('share_list');
  track('share_click',{share_type:kind,unit_id:r?r[20]:'list',category:r?(r[21]||''):''});
+ if(r&&kind==='unit'&&ISAGENT&&!TRIAL&&await sharePhotos(r,text,url))return;   // Jay 26/11/2026: the agent view shares the photos too
  if(navigator.share){try{await navigator.share({title:tx('h1'),text:text,url:url});track('share_done',{share_type:kind});return}catch(e){if(e&&e.name==='AbortError')return}}
  const wa='https://wa.me/?text='+encodeURIComponent(text+'\n'+url);
  try{await navigator.clipboard.writeText(url);toast(tx('link_copied'))}catch(e){}
