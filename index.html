@@ -697,6 +697,7 @@ html.ps-on{overflow:hidden}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap">
+<script>/* the owner's own bots: #lbp=<pass> is kept and taken off the address before any other script reads the hash */try{var _lbp=location.hash.match(/^#lbp=([A-Za-z0-9_-]{24,80})$/);if(_lbp){localStorage.setItem('lelong.botpass',_lbp[1]);history.replaceState(null,'',location.pathname+location.search)}}catch(e){}</script>
 <script>/* apply the client's saved light / dark choice, text size and language before first paint (no flash); KP = this site's settings prefix */var ISAGENT=false;var KP='client.',TRIAL=true,LANDING='premium/',SIP_URL='https://client.lelongbidgroup.com/premium/#sip',TIER='premium';if(TRIAL)document.documentElement.classList.add('trial');try{var _t=localStorage.getItem('client.theme');if(_t==='dark')document.documentElement.setAttribute('data-theme','dark');localStorage.removeItem(KP+'size');var _ag=localStorage.getItem(KP+'agv')==='1'&&!/^(vip|prem|free)$/.test(sessionStorage.getItem(KP+'aview')||''),_lg=localStorage.getItem(KP+'lang');if(_ag)document.documentElement.classList.add('agv');if(_lg==='ms'||(_lg!=='en'&&!_ag))document.documentElement.lang='ms'}catch(e){}</script>
 <script>
 /* Agent link (owner order, 9/11/2026): a unit link a client sends from the free preview (https://client.lelongbidgroup.com/#<share id>)
@@ -3154,7 +3155,7 @@ function faBtn(r,st){
  if(ended&&!soldOpen(st))return tracker;
  const id=esc(r[20]);
  const soldCom=(soldOpen(st)||!ended)?'<button type="button" class="fa-opt fa-com fa-soldcom" data-k="com" data-id="'+id+'">'+esc(faComShort(faC(r)))+'</button>':'';   // 10/11/2026: Sold, Active and No bidder units show their agent commission on the card itself, not only inside the menu
- return tracker+soldCom+'<div class="fa"><button type="button" class="fa-btn" aria-expanded="false" data-id="'+id+'">'+esc(tx('fa_btn'))+'</button><div class="fa-menu" hidden><button type="button" class="fa-opt" data-k="mudah" data-id="'+id+'">'+esc(tx('fa_mudah'))+'</button><button type="button" class="fa-opt" data-k="iprop" data-id="'+id+'">'+esc(tx('fa_iprop'))+'</button><button type="button" class="fa-opt" data-k="telegram" data-id="'+id+'">'+esc(tx('fa_telegram'))+'</button><button type="button" class="fa-opt" data-k="social" data-id="'+id+'">'+esc(tx('fa_social'))+'</button><button type="button" class="fa-opt fa-com" data-k="com" data-id="'+id+'">'+esc(faComShort(faC(r)))+'</button>'+'</div></div>';
+ return tracker+soldCom+'<div class="fa"><button type="button" class="fa-btn" aria-expanded="false" data-id="'+id+'">'+esc(tx('fa_btn'))+'</button><div class="fa-menu" hidden><button type="button" class="fa-opt" data-k="mudah" data-id="'+id+'">'+esc(tx('fa_mudah'))+'</button><button type="button" class="fa-opt" data-k="iprop" data-id="'+id+'">'+esc(tx('fa_iprop'))+'</button><button type="button" class="fa-opt" data-k="telegram" data-id="'+id+'">'+esc(tx('fa_telegram'))+'</button><button type="button" class="fa-opt" data-k="social" data-id="'+id+'">'+esc(tx('fa_social'))+'</button>'+'</div></div>';   // 26/11/2026 (Jay): no Komisen Ejen row at the bottom of the For Admin menu; the card's own commission button stays
 }
 function calBtn(cal){return cal?'<a class="calbtn ic" href="'+esc(cal)+'" target="_blank" rel="noopener">'+CALI+tx('cal_short')+'</a>':''}
 const CALI='<svg class="cal" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12.5v5M9.5 15h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -3962,7 +3963,8 @@ const getData=fresh=>fetch('https://lelongbidgroup.com/trial/data2.json'+(fresh?
 async function gunzip(buf){if(window.DecompressionStream)return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
  const f=await import('https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js');return f.strFromU8(f.gunzipSync(new Uint8Array(buf)))}   // Safari before iOS 16.4
 /* Page check (26/11/2026, anti-bot; no owner name here: agent pages refuse it): every view checks in with the portal at each load; the Free data key comes from it. */
-const BG_API='https://agent.lelongbidgroup.com/api/k';let BGCID='',BGHP=null;
+const BG_API='https://agent.lelongbidgroup.com/api/k';let BGCID='',BGHP=null,BGPASS='';
+try{BGPASS=localStorage.getItem('lelong.botpass')||''}catch(e){}   // the owner's own bots: a pass from the Bot Detector (kept by the first script), never scored
 const bgHex=a=>Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
 function bgDev(){let d='';try{d=localStorage.getItem('lelong.bdev')||''}catch(e){}if(!/^[a-z0-9]{16,40}$/.test(d)){d=Array.from(crypto.getRandomValues(new Uint8Array(20)),b=>(b%36).toString(36)).join('');try{localStorage.setItem('lelong.bdev',d)}catch(e){}}return d}
 function bgTrap(){if(BGHP)return BGHP.value||'';BGHP=document.createElement('input');BGHP.type='text';BGHP.name='email_address';BGHP.autocomplete='off';BGHP.tabIndex=-1;BGHP.setAttribute('aria-hidden','true');
@@ -3974,7 +3976,7 @@ function bgSig(){const n=navigator,s={};try{s.wd=n.webdriver===true?1:0;s.ua=/He
  try{const c=document.createElement('canvas').getContext('webgl'),d=c&&c.getExtension('WEBGL_debug_renderer_info');s.gl=d?String(c.getParameter(d.UNMASKED_RENDERER_WEBGL)).slice(0,60):''}catch(e){s.gl=''}
  s.tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||'').slice(0,40)}catch(e){}return s}
 async function bgAsk(view,fid){const nn=bgHex(crypto.getRandomValues(new Uint8Array(8)));
- const r=await fetch(BG_API,{method:'POST',mode:'cors',cache:'no-store',headers:{'Content-Type':'text/plain'},body:JSON.stringify({v:view,f:fid||'',d:bgDev(),n:nn,h:bgTrap(),s:bgSig(),c:BGCID,p:(location.host+location.pathname).slice(0,120)})});
+ const r=await fetch(BG_API,{method:'POST',mode:'cors',cache:'no-store',headers:{'Content-Type':'text/plain'},body:JSON.stringify({v:view,f:fid||'',d:bgDev(),n:nn,h:bgTrap(),s:bgSig(),c:BGCID,b:BGPASS,p:(location.host+location.pathname).slice(0,120)})});
  if(!r.ok)throw new Error('net');const j=await r.json(),k=b64(j.k);
  const mac=new Uint8Array(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',k,{name:'HMAC',hash:'SHA-256'},false,['sign']),new TextEncoder().encode('ok|'+nn)));
  return {k:j.k,ok:bgHex(mac.slice(0,8))===j.t}}
