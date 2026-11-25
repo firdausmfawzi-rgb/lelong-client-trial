@@ -129,8 +129,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .hero,.hero img,.lbox,.lbox img{-webkit-user-select:none;user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
 html.nopix .hero img,html.nopix .lbox img{filter:blur(30px) brightness(.6)}
 @media print{.hero img,.lbox img{visibility:hidden!important}}
-/* Jay 26/11/2026: lelongbidgroup.com watermark over every listing photo and the full-size photo, so a screenshot still shows where it came from */
-.hero::before,.lbox::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='230' height='130'%3E%3Ctext x='115' y='70' text-anchor='middle' transform='rotate(-24 115 65)' font-family='Arial,sans-serif' font-size='17' font-weight='700' fill='%23fff' fill-opacity='.55' stroke='%23000' stroke-opacity='.35' stroke-width='.8'%3Elelongbidgroup.com%3C/text%3E%3C/svg%3E") 0 0/230px 130px repeat}
+/* Jay 26/11/2026: lelongbidgroup.com watermark over the full-size photo (See photo) only, so a screenshot still shows where it came from; 26/11/2026 Jay: not on the card photo */
+.lbox::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='230' height='130'%3E%3Ctext x='115' y='70' text-anchor='middle' transform='rotate(-24 115 65)' font-family='Arial,sans-serif' font-size='17' font-weight='700' fill='%23fff' fill-opacity='.55' stroke='%23000' stroke-opacity='.35' stroke-width='.8'%3Elelongbidgroup.com%3C/text%3E%3C/svg%3E") 0 0/230px 130px repeat}
 .lbox::after{z-index:2}.lbox-x,.lbox-nav{z-index:3}
 .lbox-x{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:1.25rem;cursor:pointer}
 .hchip{position:absolute;top:10px;z-index:1;max-width:58%;border-radius:999px;padding:5px 11px;font-size:.8rem;font-weight:800;line-height:1.2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
