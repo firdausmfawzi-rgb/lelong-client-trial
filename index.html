@@ -125,6 +125,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .lbox-p{left:max(8px,env(safe-area-inset-left,0px))}
 .lbox-n{right:max(8px,env(safe-area-inset-right,0px))}
 .lbox-nav:hover,.lbox-nav:focus-visible{background:rgba(255,255,255,.32)}
+/* Jay 26/11/2026: listing photos cannot be saved, dragged, selected or printed; they blur while the page is not in front */
+.hero,.hero img,.lbox,.lbox img{-webkit-user-select:none;user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
+html.nopix .hero img,html.nopix .lbox img{filter:blur(30px) brightness(.6)}
+@media print{.hero img,.lbox img{visibility:hidden!important}}
+/* Jay 26/11/2026: lelongbidgroup.com watermark over every listing photo and the full-size photo, so a screenshot still shows where it came from */
+.hero::before,.lbox::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='230' height='130'%3E%3Ctext x='115' y='70' text-anchor='middle' transform='rotate(-24 115 65)' font-family='Arial,sans-serif' font-size='17' font-weight='700' fill='%23fff' fill-opacity='.55' stroke='%23000' stroke-opacity='.35' stroke-width='.8'%3Elelongbidgroup.com%3C/text%3E%3C/svg%3E") 0 0/230px 130px repeat}
+.lbox::after{z-index:2}.lbox-x,.lbox-nav{z-index:3}
 .lbox-x{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:1.25rem;cursor:pointer}
 .hchip{position:absolute;top:10px;z-index:1;max-width:58%;border-radius:999px;padding:5px 11px;font-size:.8rem;font-weight:800;line-height:1.2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .hchip.gold{left:10px;background:var(--gold);color:var(--gold-fg)}.hchip.due{right:10px;background:#0f2a44;color:#fff}.hchip .cd,.hchip .cd.soon,.hchip .cd.now{all:unset}
@@ -3531,6 +3538,18 @@ function lbShow(){const n=LB.list.length,many=n>1;G('lboxImg').src=LB.list[LB.i]
 function lbStep(d){const n=LB.list.length;if(n<2)return;LB.i=(LB.i+d+n)%n;lbShow();track('photo_next',{})}
 function openPhoto(src,cap,list){if(G('lbox').hidden)histPush('photo');const L=Array.isArray(list)&&list.length?list:[src];LB={list:L,i:Math.max(0,L.indexOf(src)),cap:cap||''};lbShow();G('lbox').hidden=false;document.documentElement.style.overflow='hidden';track('photo_open',{n:L.length})}
 function closePhoto(fromBack){G('lbox').hidden=true;G('lboxImg').removeAttribute('src');LB={list:[],i:0,cap:''};document.documentElement.style.overflow='';if(!fromBack)histDone('photo')}
+// Jay 26/11/2026: protect the listing photos. No save menu (right-click, long press), no drag, no Ctrl+S, no print;
+// the photos blur when the page loses focus or is hidden (snipping tools, app switcher, screen sharing) or on a screenshot key.
+(()=>{const H=document.documentElement,PH='.hero,.lbox';let t=0;
+ const hide=ms=>{H.classList.add('nopix');clearTimeout(t);if(ms)t=setTimeout(()=>H.classList.remove('nopix'),ms)},show=()=>{clearTimeout(t);H.classList.remove('nopix')};
+ document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest(PH))e.preventDefault()},true);
+ document.addEventListener('dragstart',e=>{if(e.target.closest&&e.target.closest(PH))e.preventDefault()},true);
+ document.addEventListener('keydown',e=>{const k=(e.key||'').toLowerCase();
+  if(k==='printscreen'||((e.metaKey||e.ctrlKey)&&e.shiftKey&&/^[345s]$/.test(k)))hide(4000);
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&k==='s')e.preventDefault()},true);
+ document.addEventListener('keyup',e=>{if(e.key==='PrintScreen')hide(4000)},true);
+ addEventListener('blur',()=>hide());addEventListener('focus',show);
+ document.addEventListener('visibilitychange',()=>{document.hidden?hide():show()})})();
 let lbSwiped=false;
 G('lbox').onclick=e=>{if(lbSwiped){lbSwiped=false;return}if(e.target.closest('.lbox-nav'))return;closePhoto()};
 G('lboxP').onclick=e=>{e.stopPropagation();lbStep(-1)};G('lboxN').onclick=e=>{e.stopPropagation();lbStep(1)};
