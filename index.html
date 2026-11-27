@@ -1939,6 +1939,8 @@ Object.assign(SIP,{rate:4,ten:35,vac:1,fees:1.5,roomUp:40});
 const stampMot=p=>{let t=0,rest=p;for(const [b,pc] of [[100000,1],[400000,2],[500000,3],[1e15,4]]){const x=Math.min(rest,b);if(x<=0)break;t+=x*pc/100;rest-=x}return t};   // Malaysian MOT scale
 const pmt=(rate,yrs,L)=>{if(L<=0)return 0;const i=rate/1200,n=Math.max(1,Math.round(yrs*12));return i>0?L*i/(1-Math.pow(1+i,-n)):L/n};
 const sqftOf=r=>{const m=/([\d,.]+)\s*sq\.?\s*(ft|m)\b/i.exec(String(r[11]||''));if(!m)return 0;const v=(parseFloat(m[1].replace(/,/g,''))||0)*(/^m$/i.test(m[2])?10.7639:1);return v>=150?Math.round(v):0};   // Sq.m converted; under 150 sq ft = not a real size
+// 27/11/2026 (Jay): saiz dalam templat salinan sentiasa Sq.ft nombor bulat: "101 Sq.m" -> "1,087 Sq.ft", "1,087.15 Sq.ft" -> "1,087 Sq.ft"
+const toSqft=v=>String(v??'').replace(/(\d[\d,]*(?:\.\d+)?)\s*(?:sq\.?\s*m(?:etres?|eters?)?|sqm|m2|m²)(?![a-z])\.?/gi,(_,n)=>Math.round(parseFloat(n.replace(/,/g,''))*10.7639).toLocaleString('en-US')+' Sq.ft').replace(/(\d[\d,]*\.\d+)(\s*(?:sq\.?\s*(?:ft|feet)|sqft)\b)/gi,(_,n,u)=>Math.round(parseFloat(n.replace(/,/g,''))).toLocaleString('en-US')+u);
 const bedsOf=r=>{const b=parseInt(r[23],10);return b>0&&b<10?b:0};
 const isHigh=r=>r[21]===CATS[0]||r[21]===CATS[5];
 // Shared specialist ad tracker. Storage and posting dates are authoritative on the portal.
@@ -2755,8 +2757,8 @@ function faAd(r,kind){const emo=kind==='mudah',a=(ADS&&ADS.units&&ADS.units[r[SI
  L.push(emo?'🏠 '+String(r[1]||''):faMask(r[1]),'','PROPERTY DETAILS:',bull+tp.plain);
  if(a.corner)L.push(bull+'Corner Lot');
  if(a.reno)L.push(bull+'Renovated');
- if(ok(r[11]))L.push(bull+'Built Up: '+r[11]);
- if(ok(r[10]))L.push(bull+'Land Area: '+r[10]);
+ if(ok(r[11]))L.push(bull+'Built Up: '+toSqft(r[11]));
+ if(ok(r[10]))L.push(bull+'Land Area: '+toSqft(r[10]));
  const bed=+a.bed||(/^\d{1,2}$/.test(r[23])?+r[23]:0),bath=+a.bath||(/^\d{1,2}$/.test(r[24])?+r[24]:0),car=+a.car||(/^\d{1,2}$/.test(r[25])?+r[25]:0);
  if(bed)L.push(bull+'Approx. '+bed+' Bedroom'+(bed>1?'s':'')+(bath?' | '+bath+' Bathroom'+(bath>1?'s':''):''));else if(/Terrace|Bungalow|Condominium|Flat/.test(r[21]))miss.push('fa_m_rooms');
  if(car)L.push(bull+'Car Park: '+car);
@@ -2780,8 +2782,8 @@ function faMudahAd(r,a,tp,p,mv,good,pct){const L=[],miss=[],h=faIprop(r);
  if(h.place)L.push('MURAH! '+h.place+(h.discount&&!h.pending?'- ✅'+h.discount+'% Discount!':''),'');
  if(good)L.push('Below Market Value '+pct+'%  😍','');else miss.push('fa_m_mv');
  L.push('🏠 '+String(r[1]||''),'','PROPERTY DETAILS:','✅ '+tp.plain);
- if(ok(r[11]))L.push('✅ Built Up: '+r[11]);
- if(ok(r[10]))L.push('✅ Land Area: '+r[10]);
+ if(ok(r[11]))L.push('✅ Built Up: '+toSqft(r[11]));
+ if(ok(r[10]))L.push('✅ Land Area: '+toSqft(r[10]));
  const bed=+a.bed||(/^\d{1,2}$/.test(r[23])?+r[23]:0),bath=+a.bath||(/^\d{1,2}$/.test(r[24])?+r[24]:0);
  if(bed)L.push('✅ Approx. '+bed+' Bedroom'+(bed>1?'s':'')+(bath?' | '+bath+' Bathroom'+(bath>1?'s':''):''));else miss.push('fa_m_rooms');
  if(ok(r[9]))L.push('✅ '+r[9]);
@@ -2827,7 +2829,7 @@ function faTplAd(r,emo){
  L.push((!pending&&discount?'MURAH! ':'')+headType+(place?' @ '+place:''));
  if(!pending&&discount)L.push('','Below Market Value '+discount+'%'+(emo?'  😍':''));else if(!pending)miss.push('fa_m_mv');
  if(address)L.push('',(emo?'🏠 ':'')+address);   // owner 11/11/2026: the full house number on iProperty too (Suhaila's template)
- const D=[],fact=v=>{if(v)D.push((emo?'✅ ':'')+v)},size=v=>clean(v).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 Sq.ft');
+ const D=[],fact=v=>{if(v)D.push((emo?'✅ ':'')+v)},size=v=>toSqft(clean(v)).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 Sq.ft');
  fact(type);
  if(corner)fact('Corner Lot');else if(end)fact('End Lot');
  if(a.reno)fact('Renovated');
@@ -2869,10 +2871,12 @@ function faSocial(r){
  const local=high?[project||type,town||district,state]:(area.length&&!/^\d/.test(area[0])&&area[0].length<=60?area:[district,state]);
  const place=local.filter((v,i,all)=>v&&all.findIndex(x=>x.toLowerCase()===v.toLowerCase())===i).join(', ');
  const money=v=>{const x=clean(v);return /^(?:RM\s*)?\d[\d,]*(?:\.\d{1,2})?$/i.test(x)?num(x):0};
- const reserve=money(r[7]),pending=stOf(r)==='unsold';
- L.push((pending?'':'MURAH! ')+(place||type));
+ const reserve=money(r[7]),rawMarket=money(r[8]),pct=reserve&&rawMarket?Math.round(100*(1-reserve/rawMarket)):0;   // 27/11/2026 (Jay): discount, Market Value, Potential Profit, tenure (logik sama faTplAd); tiada Panduan
+ const market=!suspect(r)&&pct<90?rawMarket:0,saving=reserve&&market>reserve?market-reserve:0,discount=saving&&pct>0?pct:0,pending=stOf(r)==='unsold';
+ L.push((pending?'':'MURAH! ')+(place||type)+(!pending&&discount?'- ✅'+discount+'% Discount!':''));
+ if(!pending&&discount)L.push('','Below Market Value '+discount+'%  😍');else if(!pending)miss.push('fa_m_mv');
  if(address)L.push('','🏠 '+address);
- const D=[],fact=v=>{if(v)D.push('✅ '+v)},size=v=>clean(v).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 Sq.ft');
+ const D=[],fact=v=>{if(v)D.push('✅ '+v)},size=v=>toSqft(clean(v)).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 Sq.ft');
  fact(type);
  if(corner)fact('Corner Lot');else if(end)fact('End Lot');
  if(!high&&clean(r[10]))fact('Land Area: '+size(r[10]));
@@ -2880,15 +2884,17 @@ function faSocial(r){
  const room=v=>/^(?:[1-9]\d?)(?:\s*\+\s*\d{1,2})?$/.test(clean(v))?clean(v).replace(/\s+/g,''):'';
  const bed=room(a.bed)||room(r[23]),bath=room(a.bath)||room(r[24]);
  if(bed)fact('Approx. '+bed+(bed==='1'?' Bedroom':' Bedrooms')+(bath?' | '+bath+(bath==='1'?' Bathroom':' Bathrooms'):''));else miss.push('fa_m_rooms');
+ const ten=clean(r[9]);fact(ten?ten.charAt(0).toUpperCase()+ten.slice(1).toLowerCase():'');
  if(D.length)L.push('','PROPERTY DETAILS:',...D);
  if(reserve)L.push('',pending?'🔥 Last Auction Price: '+faRm(reserve)+' 🔥':'🔥 Force Sale: '+faRm(reserve)+' 🔥');else miss.push('fa_m_price');
+ if(market)L.push('❤️ Market Value: '+faRm(market));
+ if(saving&&!pending)L.push('💎 Potential Profit: '+faRm(saving));
  const when=faDate(r[12]);
  if(pending)L.push('','📆 Auction Date: Pending next auction');
  else if(when){L.push('','📆 Auction Date: '+when);if(isExp(r))miss.push('fa_m_past')}else miss.push('fa_m_date');
  const map=faTelegramMap(a.map)||faTelegramMap(r[4]);
  if(map)L.push('','📍 NEARBY GOOGLE MAPS PIN:',map);else miss.push('fa_m_map');
  L.push('','Kindly note the following:','+ NO INSIDE VIEWING. Self-survey from outside only','+ Cash ready: 10% Deposit | 5% legal cost | 2-5% misc');
- L.push('','📢 Panduan Beli Rumah Lelong','https://proses.lelongbidgroup.com');
  const co=Array.isArray(ADS?.contact)?ADS.contact.map(clean).filter(Boolean):[];if(co.length)L.push('',...co);else miss.push('fa_m_contact');
  return {text:L.join('\n').trim(),miss,src:bed?(a.src||''):'',n:a.n||0,amen:false,osm:false}}
 // Plain text for Telegram. Keep contacts in the encrypted specialist ad pack.
@@ -2966,7 +2972,7 @@ function faTelegram(r) {
  if (project) details.push('🏠 '+project);
  fact(type);
  if (position && position.toLowerCase()!==type.toLowerCase()) fact(position);
- const areaSize = (v,unit)=>clean(v).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 '+unit);
+ const areaSize = (v,unit)=>toSqft(clean(v)).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 '+unit);
  if (!high && clean(r[10])) fact('Land Area: '+areaSize(r[10],'Sq.ft'));
  if (clean(r[11])) fact((high?'Size : ':'Built Up: ')+areaSize(r[11],high?'sqft':'Sq.ft'));
  const tenure = clean(r[9]);
@@ -3081,7 +3087,7 @@ function faIprop(r) {
  fact(project);
  fact(type);
  if (position && position.toLowerCase()!==type.toLowerCase()) fact(position);
- const size = v => clean(v).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 sqft');
+ const size = v => toSqft(clean(v)).replace(/(\d)\s*sq\.?\s*(?:ft|feet)\b\.?/gi,'$1 sqft');
  if (!high && clean(r[10])) fact('Land Size : '+size(r[10]));
  if (clean(r[11])) fact((high?'Size : ':'Built Up : ')+size(r[11]));
  fact(clean(r[9]).toUpperCase());
